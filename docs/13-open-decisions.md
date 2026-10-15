@@ -13,6 +13,7 @@
 | D-07 | Node version / test runner / validation lib (ADR-012, ADR-014) | Node 22 LTS, `node:test`, Zod | **APPROVED** 2026-10-15 |
 | D-08 | Backup target for weekly DB export | Decide in Phase 5 | DEFERRED |
 | D-09 | Merge `docs/phase-0-foundation` into `main` | After PO review of the Phase 0 docs | **APPROVED** 2026-10-15 |
-| D-10 | Replace API-Football with football-data.org (fixtures/results) + The Odds API (odds) + football-data.co.uk (history/closing). Env vars `FOOTBALL_DATA_ORG_KEY`, `ODDS_API_KEY` replace `API_FOOTBALL_KEY` in `CLAUDE.md` §3/§9 | Approve (evidence: [14](14-data-source-feasibility-results.md)) | OPEN |
-| D-11 | Market coverage under the 500 credits/month odds quota | Scanner: 1X2 + O/U main line for all matches, on days with fixtures in the next 48 h. DC, DNB, BTTS, O/U 1.5/3.5: on-demand only, within a monthly cap of about 200 credits plus a reserve. Reported as `INSUFFICIENT_DATA` (`ODDS_NOT_FETCHED`) otherwise | OPEN |
-| D-12 | Start Phase 1 (Telegram and cloud skeleton) | Approve once D-10 and D-11 are decided | OPEN |
+| D-10 | Replace API-Football with football-data.org (fixtures/results) + The Odds API (odds) + football-data.co.uk (history/closing). Env vars `FOOTBALL_DATA_ORG_KEY`, `ODDS_API_KEY` replace `API_FOOTBALL_KEY` in `CLAUDE.md` §3/§9 | Approve (evidence: [14](14-data-source-feasibility-results.md)) | **APPROVED** 2026-10-15 |
+| D-11 | Market coverage under the 500 credits/month odds quota | Scanner: 1X2 + O/U main line for all matches, on days with fixtures in the next 48 h. DC, DNB, BTTS, O/U 1.5/3.5: on-demand only, within a monthly cap of about 200 credits plus a reserve. Reported as `INSUFFICIENT_DATA` (`ODDS_NOT_FETCHED`) otherwise | **APPROVED** 2026-10-15 |
+| D-12 | Start Phase 1 (Telegram and cloud skeleton) | Approve once D-10 and D-11 are decided | **APPROVED** 2026-10-15 |
+| D-13 | Add UEFA Champions League and Europa League (PO request 2026-10-15) | See recommendation in [14 §5](14-data-source-feasibility-results.md#5-uefa-champions-league-and-europa-league-request-2026-10-15) | OPEN |

@@ -11,7 +11,7 @@
 - GitHub repository: https://github.com/hbrnm/sarakie
 - Repository name: sarakie
 - Version: 1.0.0
-- Current stage: PHASE 0 — Foundation and Architecture
+- Current stage: PHASE 1 — Telegram and cloud skeleton (Phase 0 completed 2026-10-15)
 - Product Owner: User
 
 FVIS is a private football value intelligence system designed to identify, quantify, explain and track potentially mispriced football betting markets.
@@ -72,9 +72,13 @@ League identifiers must be discovered dynamically through the provider adapter. 
 - Database: Supabase PostgreSQL
 - Hosting: Render
 - Scheduled execution: GitHub Actions
-- Candidate football data provider: API-Football
+- ~~Candidate football data provider: API-Football~~ — superseded 2026-10-15 (D-10): the free plan only serves seasons 2022–2024.
+- Football data providers (D-10, verified in Phase 2b, see `docs/14-data-source-feasibility-results.md`):
+  - fixtures and results: football-data.org (free tier);
+  - pre-match odds: The Odds API (free tier, 500 credits/month);
+  - historical results and closing odds: football-data.co.uk (public CSV).
 
-The data provider is a candidate, not a guaranteed final selection. Its actual coverage, endpoint behavior, odds availability and free-tier limitations must be validated before implementation decisions are finalized.
+Providers remain replaceable through adapters. Their coverage, endpoint behavior, odds availability and free-tier limitations must keep being validated.
 
 ### Quantitative model
 
@@ -94,6 +98,8 @@ The data provider is a candidate, not a guaranteed final selection. Its actual c
 - Both Teams To Score
 
 Availability depends on the data provider and must be verified.
+
+Coverage under the free odds quota (D-11, 2026-10-15): the daily scanner prices 1X2 and the main Over/Under line for all fixtures. Double Chance, Draw No Bet, BTTS and Over/Under 1.5/3.5 are priced on demand only, within a monthly credit cap. Without fetched odds, a market is reported as `INSUFFICIENT_DATA`.
 
 ## 4. NON-NEGOTIABLE ARCHITECTURAL PRINCIPLES
 
@@ -140,7 +146,7 @@ Do not introduce microservices, unnecessary infrastructure or premature abstract
 
 External football data must pass through a provider adapter.
 
-Domain logic must not depend directly on API-Football response structures.
+Domain logic must not depend directly on any provider's response structures (originally: API-Football).
 
 ### 4.5 One analysis pipeline
 
@@ -319,13 +325,16 @@ Expected environment variable names:
 TELEGRAM_BOT_TOKEN
 TELEGRAM_WEBHOOK_SECRET
 TELEGRAM_ALLOWED_USER_IDS
-API_FOOTBALL_KEY
+FOOTBALL_DATA_ORG_KEY
+ODDS_API_KEY
 GEMINI_API_KEY
 GEMINI_MODEL_ID
 SUPABASE_URL
 SUPABASE_SERVICE_ROLE_KEY
 SCHEDULER_TRIGGER_SECRET
 ```
+
+`API_FOOTBALL_KEY` was replaced by `FOOTBALL_DATA_ORG_KEY` and `ODDS_API_KEY` on 2026-10-15 (D-10).
 
 The `.env.example` file must contain names and safe placeholders only.
 
@@ -538,5 +547,7 @@ Dated record of Product Owner approvals. It updates §15 without rewriting it.
 | 2026-10-15 | Phase 2a (provider feasibility spike) approved to run **before** Phase 1 (D-01). Its scope is measurement only: no production code, no deployment. |
 | 2026-10-15 | Phase 2a option A (GitHub Actions probe) approved; merge of `spike/provider-feasibility` into `main` approved. |
 | 2026-10-15 | D-02 option 1 (free-source combination) chosen; Phase 2b probe approved and merged to `main`. Spike-only secrets: `FOOTBALL_DATA_ORG_KEY`, `ODDS_API_KEY`. |
+| 2026-10-15 | D-10 (provider set), D-11 (market coverage under odds quota) approved. `docs/phase-2b-results` approved for merge. |
+| 2026-10-15 | **Phase 1 (Telegram and cloud skeleton) authorized** (D-12). Deployment is performed by the Product Owner on Render. |
 
-Phase 1 and all later phases remain **not authorized** until explicitly approved.
+Phase 2 and all later phases remain **not authorized** until explicitly approved.

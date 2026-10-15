@@ -70,3 +70,23 @@ About 190 matches/month across the 5 leagues. All figures are estimates derived 
 - The **credit budget guard** for odds becomes a first-class component: monthly budget, per-run cap, reserve.
 - Env var changes are needed: `FOOTBALL_DATA_ORG_KEY`, `ODDS_API_KEY` replace `API_FOOTBALL_KEY` (requires a governance update, see D-10).
 - The Pinnacle-based closing benchmark is unavailable for the current season. The validation plan uses `AvgC*` (market-average closing) as the benchmark, with Pinnacle where present.
+
+## 5. UEFA Champions League and Europa League (request 2026-10-15)
+
+Status: **OPEN (D-13)**. Not yet in scope.
+
+| Aspect | Champions League | Europa League |
+|---|---|---|
+| Fixtures/results (football-data.org free) | Visible in the competition list (13 competitions seen); to confirm with a probe | **Probably not in the free tier** (UNVERIFIED) |
+| Odds (The Odds API) | Sport key expected (`soccer_uefa_champs_league`, UNVERIFIED) | Sport key expected (`soccer_uefa_europa_league`, UNVERIFIED) |
+| History (football-data.co.uk) | No CSV (domestic leagues only, UNVERIFIED) | No CSV |
+| **Model applicability** | **Not covered by the v1 model** | **Not covered** |
+
+**Why the model does not apply as-is:** v1 team strengths are measured *relative to the team's own league* (spec §3). A Premier League team with α = 1.2 and a Primeira Liga team with α = 1.2 are not equally strong, so cross-league matches need an inter-league strength adjustment, which is not specified. Many UCL/UEL teams also come from leagues outside our data (e.g. Austria, Switzerland, Scotland, Czechia), so the system would return `INSUFFICIENT_DATA`.
+
+**Credits:** about 30 extra matches/month in season. Featured odds for 2 more competitions cost about 4 credits per scan day (about 60/month).
+
+**RECOMMENDATION:**
+
+1. Short term (Phase 2): show UCL/UEL fixtures and odds in Telegram for information only. Every model output is marked `INSUFFICIENT_DATA` (`MODEL_NOT_APPLICABLE_CROSS_LEAGUE`), and no value conclusions are drawn.
+2. Phase 6: specify and validate a cross-league extension (e.g. league-strength offsets estimated from European results), then enable model output for UCL/UEL only if backtests support it.
