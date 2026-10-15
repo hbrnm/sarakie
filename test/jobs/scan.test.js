@@ -130,7 +130,7 @@ test('UCL/UEL days: the digest has a market-only cup section; nothing is recorde
   const text = sender.sent[0].text;
   assert.match(text, /SELECȚIILE ZILEI \(LINE_VALUE · Unibet\)\nNiciuna azi la Unibet\./);
   assert.match(text, /CUPE EUROPENE — DOAR PIAȚA \(informativ\)/);
-  assert.match(text, /UEFA Champions League · .* — Benfica – Celtic\n {2}piață: 1 \d+\.\d% · X \d+\.\d% · 2 \d+\.\d% \(1 case, cote de la \d\d:\d\d\)/);
+  assert.match(text, /UEFA Champions League · .* — Benfica – Celtic\n {2}piață: 1 \d+\.\d% · X \d+\.\d% · 2 \d+\.\d% \(1 case, cote de la \d\d:\d\d, cu 10 h înainte de start: se pot fi mișcat\)/);
   assert.equal(fake.table('predictions').filter((p) => p.fixture_id === 'ucl-1').length, 0);
 });
 

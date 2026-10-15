@@ -584,5 +584,6 @@ Dated record of Product Owner approvals. It updates §15 without rewriting it.
 
 | 2026-10-15 | **Phase 6d plan (`docs/23`) approved.** PO bookmakers: betano, gsbet, superbet, mrbit, unibet, fortuna; only Unibet is covered by the odds source. "Both sets" approved: candidates recorded for all bookmakers and for the PO's (Unibet) scope; digest shows the Unibet scope. |
 | 2026-10-15 | **D-25** approved: Phase 6d refinements (power de-vig, line rule 1.1.0; fixture-clustered `/clv` CI with `N_fixtures`; time-to-kickoff buckets; webhook acknowledged before processing); §5 verdict also requires ≥ 75 distinct fixtures. Commit, push and PR of `feature/phase-6d-refinements` approved. |
+| 2026-10-15 | PR #6 merged by the PO. **D-26** approved: the UCL/UEL market view de-vigs each bookmaker with the power method (amends §6 for that view) and flags odds captured ≥ 3 h before kickoff; commit, push and PR approved. |
 
 Phase 6 (except the 6a feasibility study, the 6b backtest, the 6c measurement and the 6d paper test) and later phases remain **not authorized** until explicitly approved.

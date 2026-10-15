@@ -90,7 +90,7 @@ test('UCL/UEL match → market-only view from stored odds, no model, no credits,
   );
   const text = await analyzer.analyze('AZ - Hapoel');
   assert.match(text, /UEFA Europa League · .* — AZ Alkmaar – Hapoel Be'er Sheva/);
-  assert.match(text, /piață: 1 \d+\.\d% · X \d+\.\d% · 2 \d+\.\d% · Peste 2\.5 \d+\.\d% \(1 case, cote de la \d\d:\d\d\)/);
+  assert.match(text, /piață: 1 \d+\.\d% · X \d+\.\d% · 2 \d+\.\d% · Peste 2\.5 \d+\.\d% \(1 case, cote de la \d\d:\d\d, cu 24 h înainte de start: se pot fi mișcat\)/);
   assert.match(text, /Modelul FVIS nu se aplică/);
   assert.doesNotMatch(text, /EV [+−]|ELIGIBIL|WATCHLIST/);
   assert.equal(odds.calls.eventOdds.length, 0);
