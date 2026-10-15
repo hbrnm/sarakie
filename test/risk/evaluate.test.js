@@ -128,3 +128,16 @@ test('determinism and config hash', () => {
   }
   assert.ok(Object.values(RISK_PARAMETERS).every((p) => p.class === 'PROVISIONAL'));
 });
+
+test('D-18: a team with fewer than 10 matches in its window caps a qualifying selection at WATCHLIST', () => {
+  const boost = { market: 'OU', sel: 'OVER', line: 2.5, factor: 1.18 };
+  const quotes = [...book('a', { margin: 0.1, boost }), ...book('b', { margin: 0.1, boost }), ...book('c', { margin: 0.1, boost })];
+  const short = { ...EST, diagnostics: { ...EST.diagnostics, home: { ...EST.diagnostics.home, n: 6 } } };
+  const s = sel(scanner(quotes, { estimate: short }), 'OU', 'OVER', 2.5);
+  assert.equal(s.status, 'WATCHLIST');
+  assert.deepEqual(s.reasonCodes, ['TEAM_SAMPLE_SMALL']);
+  const atThreshold = { ...EST, diagnostics: { ...EST.diagnostics, away: { ...EST.diagnostics.away, n: 10 } } };
+  assert.equal(sel(scanner(quotes, { estimate: atThreshold }), 'OU', 'OVER', 2.5).status, 'QUALIFIED');
+  // NO_VALUE and INSUFFICIENT_DATA are unaffected: the gate only applies to positive-EV selections.
+  assert.equal(sel(scanner(quotes, { estimate: short }), 'BTTS', 'YES').status, 'INSUFFICIENT_DATA');
+});

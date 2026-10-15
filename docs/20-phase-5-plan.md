@@ -111,3 +111,7 @@ Verification: 164/164 tests, lint clean. Tests cover one digest per day across d
 - Scanner: 4 fixtures in the 48 h horizon (Friday matches), 4 analysed, 4 recorded → 64 predictions (4 QUALIFIED, 6 WATCHLIST, 14 NO_VALUE, 40 INSUFFICIENT_DATA, mostly `ODDS_NOT_FETCHED` per D-11); digest stored (2,412 chars); 1 model version registered.
 - Telegram send failed with **HTTP 401** (bot token rejected) → run `PARTIAL`, as designed. Cause is the GitHub secret `TELEGRAM_BOT_TOKEN`; Render's token works. Follow-up: the sender now trims the token, checks its format and names the cause on 401/403.
 - **Quantitative observation:** 3 of the 4 QUALIFIED selections involve promoted teams with only 6–8 current-season matches (Deportivo, Le Mans, Frosinone). This follows the approved spec (`nTeamMin = 5`, shrinkage `k = 8`, promoted prior disabled; docs/04 §8), but such estimates are the least reliable. Decision requested from the PO (D-18).
+
+### D-18 implementation (risk rules 1.1.0)
+
+`TEAM_SAMPLE_SMALL` qualification gate in `src/domain/risk/evaluate.js`: if `n_H` or `n_A` (team matches in the model window, from the estimate diagnostics) is below `minTeamMatchesQualify` = 10 (PROVISIONAL), a positive-EV selection is at most WATCHLIST. The model and its outputs are unchanged; predictions are still recorded. The new risk config hash changes `input_hash`, so the next scan records a fresh set for every fixture. Applied to the first live scan, the three promoted-team QUALIFIED selections (n = 6–8) would be WATCHLIST; Frankfurt – Köln (38/38) stays QUALIFIED.

@@ -69,6 +69,10 @@ function evaluateFixture({ fixture, estimate, quotes, fetchedMarkets, mode, now,
   if (fixture.status !== 'SCHEDULED' || !(kickoffMs > nowMs)) fixtureReasons.push('FIXTURE_NOT_SCHEDULED');
   else if (kickoffMs - nowMs < config.minLeadTimeMinutes * 60000) fixtureReasons.push('KICKOFF_TOO_CLOSE');
 
+  // D-18: short team histories (typically promoted teams) are estimated, but never QUALIFIED.
+  const diag = estimate.diagnostics || {};
+  const teamSampleSmall = [diag.home, diag.away].some((t) => t && Number.isInteger(t.n) && t.n < config.minTeamMatchesQualify);
+
   const fetched = new Set(fetchedMarkets);
   const latest = latestQuotes(quotes.filter((q) => q.kind === undefined || q.kind === 'pre_match'));
   const bySel = new Map();
@@ -150,6 +154,7 @@ function evaluateFixture({ fixture, estimate, quotes, fetchedMarkets, mode, now,
     if (pModel < config.pQualifyMin) q.push('PROB_TOO_LOW');
     if (best.decimalOdds < config.qualifyOddsMin || best.decimalOdds > config.qualifyOddsMax) q.push('ODDS_OUT_OF_RANGE');
     if (bookmakerCount < config.minBookmakers) q.push('THIN_MARKET');
+    if (teamSampleSmall) q.push('TEAM_SAMPLE_SMALL');
     selections.push({ ...record, status: q.length ? 'WATCHLIST' : 'QUALIFIED', reasonCodes: q });
   }
 

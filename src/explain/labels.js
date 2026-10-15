@@ -48,6 +48,7 @@ const REASONS = Object.freeze({
   PROB_TOO_LOW: 'probabilitate prea mică',
   ODDS_OUT_OF_RANGE: 'cotă în afara intervalului acceptat',
   THIN_MARKET: 'prea puține case de pariuri',
+  TEAM_SAMPLE_SMALL: 'istoric scurt pentru o echipă (sub 10 meciuri, de ex. promovată)',
 });
 
 const reasonText = (code) => REASONS[code] || code;
