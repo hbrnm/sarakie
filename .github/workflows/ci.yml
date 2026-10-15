@@ -22,3 +22,30 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm audit --audit-level=high
+
+  db:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGUSER: postgres
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v5
+      - name: Supabase API roles (present by default on Supabase)
+        run: psql -v ON_ERROR_STOP=1 -c "create role anon nologin; create role authenticated nologin;"
+      - name: Apply migrations in order
+        run: for f in $(ls supabase/migrations/*.sql | sort); do echo "== $f"; psql -v ON_ERROR_STOP=1 -q -f "$f"; done
+      - name: Database assertions
+        run: for f in supabase/tests/*.test.sql; do echo "== $f"; psql -v ON_ERROR_STOP=1 -q -t -f "$f"; done
