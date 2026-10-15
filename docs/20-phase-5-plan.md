@@ -88,3 +88,20 @@ Verification: 151/151 unit tests, lint clean; all migrations and both DB test fi
 CI run 38714801774 green (test + db jobs). Merge into `main` and migration 3 approved by the PO on 2026-10-15. `main` fast-forwarded to `561cb77`; migration 3 applied to Supabase `fvis` (RLS on all 6 new tables, no anon access, 2 append-only triggers on each of the 5 append-only tables; advisor: only the expected INFO "RLS enabled, no policy").
 
 Not yet done: no end-to-end run against live data, since the service-role key is only available in GitHub Actions and on Render (first live run is the 5.2 scanner).
+
+## 7. Sub-phase 5.2 — implementation (2026-10-15)
+
+| Deliverable | File |
+|---|---|
+| Scanner job: domestic fixtures in the next 48 h → `analyzeFixture` (scanner mode, D-11 markets) → `recordAnalysis` → digest → Telegram | `src/jobs/scan.js`, `scripts/scan.js` |
+| Digest text (Romanian; numbers only from `buildFacts`; QUALIFIED then WATCHLIST by EV, max 25 each; coverage, credits, disclaimer) | `src/telegram/digest.js` |
+| Bot API sender for jobs (plain text, split under 4,096 chars, 3 attempts on 5xx/429/network, token redacted) | `src/telegram/send.js` |
+| Missed-run watchdog (alert if no OK/PARTIAL scanner run for today, Europe/Bucharest) | `scanWatchdog` in `src/jobs/scan.js`, `scripts/scan-watchdog.js`, `.github/workflows/scan-watchdog.yml` (10:17 UTC) |
+| Workflow: `Scan` step after `Sync` in `daily-sync` (runs even if a competition failed to sync); manual input `scan_only` skips the sync (0 credits) | `.github/workflows/daily-sync.yml` |
+| Bot: `/scan` re-sends the latest stored digest (no re-run, no credits); `/health` shows the last finished scanner run | `src/telegram/bot.js`, `src/telegram/messages.js`, `src/persistence/queries.js` |
+
+Idempotency: every run records an `analysis_runs` row and new predictions only where inputs changed. The digest row (primary key `scan_date`) is inserted **before** sending; a second run the same day, or a run that loses the race, finds the row and sends nothing. If Telegram fails, the run is `PARTIAL`, the digest stays stored and `/scan` re-sends it; the watchdog counts `PARTIAL` as "ran".
+
+Gemini is not used by the scanner (template numbers only); it stays limited to `/analyze` (5.3).
+
+Verification: 164/164 tests, lint clean. Tests cover one digest per day across duplicated runs, a lost claim race, Telegram failure (`PARTIAL`, digest kept), empty horizon, a failing fixture, watchdog alert/no alert, message splitting, sender retry and token redaction, Bucharest scan date across midnight, `/scan` and `/health`.

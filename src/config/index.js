@@ -96,4 +96,14 @@ function loadConfig(env = process.env) {
   });
 }
 
-module.exports = { loadConfig, ConfigError, SECRET_KEYS };
+/**
+ * Parses TELEGRAM_ALLOWED_USER_IDS for job scripts (same rules as loadConfig).
+ * @returns {Set<number>}
+ */
+function parseAllowedUserIds(value) {
+  const r = allowedUserIds.safeParse(value ?? '');
+  if (!r.success) throw new ConfigError([{ variable: 'TELEGRAM_ALLOWED_USER_IDS', message: r.error.issues[0].message }]);
+  return r.data;
+}
+
+module.exports = { loadConfig, parseAllowedUserIds, ConfigError, SECRET_KEYS };

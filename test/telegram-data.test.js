@@ -36,7 +36,9 @@ function seed() {
 function botWith(t, db) {
   const queries = createQueries(db, { now: () => NOW });
   const budget = createCreditBudget({ store: createSupabaseCreditStore(db), now: () => NOW });
-  const data = db ? { upcoming: (q) => queries.upcoming(q), quota: () => queries.quota({ budget }), ping: () => queries.ping() } : null;
+  const data = db
+    ? { upcoming: (q) => queries.upcoming(q), quota: () => queries.quota({ budget }), ping: () => queries.ping(), latestDigest: () => queries.latestDigest(), lastScan: () => queries.lastScan() }
+    : null;
   const { logger } = createMemoryLogger();
   const bot = createBot({ token: VALID_ENV.TELEGRAM_BOT_TOKEN, allowedUserIds: new Set([USER]), logger, getStatus: () => ({ version: '0.1.0', uptimeSeconds: 5, now: NOW }), data, now: () => NOW });
   return { bot, calls: stubTelegram(bot, t) };
@@ -126,4 +128,38 @@ test('/health reports database status: connected, not configured, error', async 
   r = botWith(t, broken);
   await r.bot.handleUpdate(messageUpdate({ userId: USER, text: '/health' }));
   assert.match(r.calls.at(-1).payload.text, /Bază de date: eroare de conexiune/);
+});
+
+test('/scan re-sends the latest stored digest (split if long) and never re-runs the scanner', async (t) => {
+  const db = seed();
+  db.table('scan_digests').push(
+    { scan_date: '2026-10-15', text: 'vechi' },
+    { scan_date: '2026-10-16', text: `FVIS — scanare zilnică 2026-10-16\n${'linie lungă\n'.repeat(400)}final` },
+  );
+  const { bot, calls } = botWith(t, db);
+  await bot.handleUpdate(messageUpdate({ userId: USER, text: '/scan' }));
+  assert.ok(calls.length >= 2);
+  assert.match(calls[0].payload.text, /^FVIS — scanare zilnică 2026-10-16/);
+  assert.match(calls.at(-1).payload.text, /final$/);
+  assert.ok(calls.every((c) => c.payload.text.length <= 4096));
+  assert.equal(db.table('analysis_runs').length, 0);
+});
+
+test('/scan without any digest says so', async (t) => {
+  const { bot, calls } = botWith(t, seed());
+  await bot.handleUpdate(messageUpdate({ userId: USER, text: '/scan' }));
+  assert.match(calls[0].payload.text, /Nu există încă niciun rezumat/);
+});
+
+test('/health shows the last finished scanner run', async (t) => {
+  const db = seed();
+  db.table('competitions').push({ code: 'EPL' });
+  db.table('analysis_runs').push(
+    { trigger: 'scanner', scan_date: '2026-10-15', status: 'OK', started_at: '2026-10-15T07:20:00Z', finished_at: '2026-10-15T07:21:00Z' },
+    { trigger: 'on_demand', scan_date: null, status: 'OK', started_at: '2026-10-16T09:00:00Z', finished_at: '2026-10-16T09:00:05Z' },
+    { trigger: 'scanner', scan_date: '2026-10-16', status: 'RUNNING', started_at: '2026-10-16T07:20:00Z', finished_at: null },
+  );
+  const { bot, calls } = botWith(t, db);
+  await bot.handleUpdate(messageUpdate({ userId: USER, text: '/health' }));
+  assert.match(calls[0].payload.text, /Ultima scanare: 2026-10-15 \(OK\)/);
 });

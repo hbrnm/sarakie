@@ -8,6 +8,8 @@
 const APPEND_ONLY = new Set(['odds_snapshots', 'odds_credit_ledger', 'model_versions', 'predictions', 'prediction_outcomes', 'explanations', 'scan_digests']);
 const IDENTITY = new Set(['bookmakers', 'odds_snapshots', 'provider_request_log', 'odds_credit_ledger', 'model_versions', 'predictions', 'explanations']);
 const UUID_DEFAULT = new Set(['teams', 'fixtures', 'analysis_runs']); // `default gen_random_uuid()` in the schema
+// Unique keys enforced on insert (subset used by tests).
+const UNIQUE = { scan_digests: ['scan_date'] };
 // Upsert merges provided columns into the existing row, like ON CONFLICT DO UPDATE.
 
 function createFakeDb() {
@@ -49,6 +51,10 @@ function createFakeDb() {
       },
       eq(col, val) {
         state.filters.push((r) => r[col] === val);
+        return builder;
+      },
+      neq(col, val) {
+        state.filters.push((r) => r[col] !== val);
         return builder;
       },
       gte(col, val) {
@@ -98,6 +104,9 @@ function createFakeDb() {
         r.id = seq.get(name);
       }
       if (UUID_DEFAULT.has(name) && r.id === undefined) r.id = require('node:crypto').randomUUID();
+      if (s.op === 'insert' && UNIQUE[name] && t.some((x) => UNIQUE[name].every((k) => x[k] === r[k]))) {
+        return { data: null, error: { message: 'duplicate key', code: '23505' } };
+      }
       if (s.op === 'upsert') {
         const existing = t.find((x) => s.onConflict.every((k) => x[k] === r[k]));
         if (existing) {

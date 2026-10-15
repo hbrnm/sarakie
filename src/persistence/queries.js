@@ -71,7 +71,25 @@ function createQueries(db, { creditStore, now = () => new Date() } = {}) {
     return { competitions: rows.length };
   }
 
-  return { upcoming, quota, ping, creditStore };
+  /** The most recent stored scanner digest, or null. */
+  async function latestDigest() {
+    const rows = unwrap(
+      await db.from('scan_digests').select('scan_date, text').order('scan_date', { ascending: false }).range(0, 0),
+      'read latest digest',
+    );
+    return rows.length ? { scanDate: rows[0].scan_date, text: rows[0].text } : null;
+  }
+
+  /** The most recent finished scanner run (any status), or null. */
+  async function lastScan() {
+    const rows = unwrap(
+      await db.from('analysis_runs').select('scan_date, status, finished_at').eq('trigger', 'scanner').neq('status', 'RUNNING').order('started_at', { ascending: false }).range(0, 0),
+      'read last scan',
+    );
+    return rows.length ? { scanDate: rows[0].scan_date, status: rows[0].status, finishedAt: rows[0].finished_at } : null;
+  }
+
+  return { upcoming, quota, ping, latestDigest, lastScan, creditStore };
 }
 
 module.exports = { createQueries };

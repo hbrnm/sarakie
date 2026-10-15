@@ -73,6 +73,13 @@ function createBot({ token, allowedUserIds, logger, getStatus, data = null, now 
       if (data && data.ping) {
         try {
           database = { state: 'connected', ...(await data.ping()) };
+          if (data.lastScan) {
+            try {
+              database.lastScan = await data.lastScan();
+            } catch (err) {
+              logger.warn('health.last_scan_failed', { error: err && err.message });
+            }
+          }
         } catch (err) {
           logger.error('health.database_failed', { error: err && err.message });
           database = { state: 'error' };
@@ -97,6 +104,8 @@ function createBot({ token, allowedUserIds, logger, getStatus, data = null, now 
       return messages.fixturesMessages(items, { days, competitionCode: code });
     },
     quota: async () => (data ? messages.quotaMessage(await data.quota()) : messages.dataUnavailableMessage()),
+    // Re-sends the latest stored digest; never re-runs the scanner and uses no credits.
+    scan: async () => (data && data.latestDigest ? messages.scanMessages(await data.latestDigest()) : messages.dataUnavailableMessage()),
   };
 
   // Commands are recognized from the text itself, not only from Telegram's

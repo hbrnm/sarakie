@@ -2,6 +2,7 @@
 
 const { formatForDisplay, formatKickoff } = require('../time/format');
 const { getCompetition } = require('../domain/competitions');
+const { splitMessage } = require('./send');
 
 // Bot messages are in Romanian (D-04). Plain text only: no parse_mode, nothing to escape.
 
@@ -13,9 +14,10 @@ function startMessage() {
   return [
     'Bun venit în FVIS — Football Value Intelligence System.',
     '',
-    'Stadiu actual: Faza 2 (date). Analiza meciurilor nu este încă disponibilă.',
+    'Stadiu actual: Faza 5 (scanare zilnică). Analiza la cerere (/analyze) urmează.',
     '',
     'Comenzi:',
+    '/scan — ultimul rezumat al scanării zilnice',
     '/fixtures — meciurile următoare',
     '/quota — consumul surselor de date',
     '/help — lista de comenzi',
@@ -35,8 +37,9 @@ function helpMessage() {
     '/fixtures <ligă> — meciurile din următoarele 7 zile pentru o ligă',
     '   ligi: epl, laliga, seriea, bundesliga, ligue1, ucl, uel',
     '/quota — credite de cote și cereri către surse',
+    '/scan — retrimite ultimul rezumat al scanării zilnice (nu rulează o scanare nouă)',
     '',
-    'Comenzi planificate (fazele următoare): /analyze, /scan.',
+    'Comandă planificată: /analyze <gazde> <oaspeți>.',
   ].join('\n');
 }
 
@@ -52,12 +55,19 @@ function healthMessage({ version, uptimeSeconds, now }, database = null) {
       : database.state === 'not_configured'
         ? 'Bază de date: neconfigurată (lipsesc SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY)'
         : 'Bază de date: eroare de conexiune (detalii în log-ul serviciului)';
+  const scan =
+    database && database.state === 'connected' && 'lastScan' in database
+      ? database.lastScan
+        ? `Ultima scanare: ${database.lastScan.scanDate} (${database.lastScan.status})`
+        : 'Ultima scanare: niciuna încă'
+      : null;
   return [
     'Stare: OK',
     `Versiune: ${version}`,
     `Rulează de: ${formatUptime(uptimeSeconds)}`,
     `Ora: ${formatForDisplay(now)}`,
     ...(db ? [db] : []),
+    ...(scan ? [scan] : []),
   ].join('\n');
 }
 
@@ -150,6 +160,12 @@ function quotaMessage({ odds, requestsToday }) {
   ].join('\n');
 }
 
+/** Latest scanner digest, split for Telegram. */
+function scanMessages(digest) {
+  if (!digest) return 'Nu există încă niciun rezumat al scanării zilnice.';
+  return splitMessage(digest.text);
+}
+
 function dataUnavailableMessage() {
   return 'Datele nu sunt disponibile momentan (baza de date nu este configurată sau nu răspunde). Încearcă din nou mai târziu.';
 }
@@ -161,6 +177,7 @@ function unknownLeagueMessage(arg) {
 module.exports = {
   fixturesMessages,
   quotaMessage,
+  scanMessages,
   dataUnavailableMessage,
   unknownLeagueMessage,
   parseLeague, startMessage, helpMessage, healthMessage, unknownMessage, formatUptime, DISCLAIMER };

@@ -35,4 +35,11 @@ function formatKickoff(date) {
   return kickoffFormatter.format(date);
 }
 
-module.exports = { formatForDisplay, formatKickoff, DISPLAY_TIME_ZONE };
+const dateFormatter = new Intl.DateTimeFormat('en-CA', { timeZone: DISPLAY_TIME_ZONE, year: 'numeric', month: '2-digit', day: '2-digit' });
+
+/** Calendar day in Europe/Bucharest as YYYY-MM-DD (the scanner's `scan_date`). */
+function bucharestDate(date) {
+  return dateFormatter.format(date);
+}
+
+module.exports = { formatForDisplay, formatKickoff, bucharestDate, DISPLAY_TIME_ZONE };

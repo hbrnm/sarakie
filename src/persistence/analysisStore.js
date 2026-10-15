@@ -213,7 +213,38 @@ function createAnalysisStore(db) {
     unwrap(await db.from('explanations').insert(row), 'insert explanation');
   }
 
+  async function getDigest(scanDate) {
+    const rows = unwrap(await db.from('scan_digests').select('scan_date, analysis_run_id, text, created_at').eq('scan_date', scanDate), 'read digest');
+    return rows[0] || null;
+  }
+
+  /**
+   * Stores the day's digest. The primary key on scan_date makes this the claim: only the
+   * first run of a day stores (and then sends) a digest.
+   * @returns {Promise<boolean>} false if a digest for the day already exists
+   */
+  async function insertDigest({ scanDate, runId, text }) {
+    try {
+      unwrap(await db.from('scan_digests').insert({ scan_date: scanDate, analysis_run_id: runId, text }), 'insert digest');
+      return true;
+    } catch (err) {
+      if (err.dbCode === '23505') return false;
+      throw err;
+    }
+  }
+
+  /** Finished scanner runs (OK or PARTIAL) for a scan date. */
+  async function successfulScans(scanDate) {
+    return unwrap(
+      await db.from('analysis_runs').select('id, status, finished_at').eq('trigger', 'scanner').eq('scan_date', scanDate).in('status', ['OK', 'PARTIAL']),
+      'read scanner runs',
+    );
+  }
+
   return {
+    getDigest,
+    insertDigest,
+    successfulScans,
     getFixture,
     upcomingFixtures,
     loadHistory,
