@@ -567,5 +567,6 @@ Dated record of Product Owner approvals. It updates §15 without rewriting it.
 | 2026-10-15 | **Phase 5 (Scanner and prediction tracking) authorized**; plan `docs/20-phase-5-plan.md` approved with D-08, D-14, D-15, D-16, D-17. Sub-phase 5.1 started. |
 | 2026-10-15 | Phase 5.1 merge into `main` approved; migration 3 (`predictions` and related tables) approved for Supabase. |
 | 2026-10-15 | Phase 5.2 (scanner, digest, `/scan`, watchdog) merge into `main` approved; manual `daily-sync` run with `scan_only` approved as live verification. PO added GitHub secrets `TELEGRAM_BOT_TOKEN`, `TELEGRAM_ALLOWED_USER_IDS`. |
+| 2026-10-15 | Telegram token fix (`ce69894`) merge approved. **D-18 option A** approved: selections involving a team with fewer than 10 matches in its model window are capped at WATCHLIST (risk rules 1.1.0). |
 
 Phase 6 and later phases remain **not authorized** until explicitly approved.

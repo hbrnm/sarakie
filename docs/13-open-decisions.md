@@ -21,3 +21,4 @@
 | D-15 | Scanner as a second step of the `daily-sync` workflow | Approve | **APPROVED** 2026-10-15 |
 | D-16 | `/analyze`: one event-odds call with all 6 markets, 2 h reuse, within the 200-credit on-demand cap | Approve | **APPROVED** 2026-10-15 |
 | D-17 | Record all 16 selections per analysed fixture, including `INSUFFICIENT_DATA` | Approve | **APPROVED** 2026-10-15 |
+| D-18 | Promoted / short-history teams (3 of 4 QUALIFIED in the first live scan had 6–8 matches) | Option A: qualification gate `TEAM_SAMPLE_SMALL` — a team with fewer than 10 matches in its window caps the selection at WATCHLIST (PROVISIONAL threshold); predictions still recorded | **APPROVED** 2026-10-15 |
