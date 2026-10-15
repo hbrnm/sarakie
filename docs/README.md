@@ -20,6 +20,7 @@ Phase 0 — Foundation and Architecture. Governance: [`../CLAUDE.md`](../CLAUDE.
 | 13 | [Open decisions](13-open-decisions.md) | Decisions awaiting the Product Owner |
 | 14 | [Data source feasibility results](14-data-source-feasibility-results.md) | Phase 2a/2b measured results and odds credit budget |
 | 15 | [Phase 1 runbook](15-phase-1-runbook.md) | Bot creation and Render deployment steps |
+| 16 | [Phase 2 plan](16-phase-2-plan.md) | Increments 2.1–2.3 and status |
 
 ## Conventions used in all documents
 

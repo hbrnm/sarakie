@@ -1,0 +1,35 @@
+# Phase 2 — live adapter smoke test (manual). Reads providers only; writes no database.
+name: adapter-smoke
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci --omit=dev
+      - name: Run smoke test
+        env:
+          FOOTBALL_DATA_ORG_KEY: ${{ secrets.FOOTBALL_DATA_ORG_KEY }}
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+        run: |
+          node scripts/adapter-smoke.js
+          cat smoke-output/smoke.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: adapter-smoke-${{ github.run_id }}
+          path: smoke-output/
+          retention-days: 30
+          if-no-files-found: ignore
