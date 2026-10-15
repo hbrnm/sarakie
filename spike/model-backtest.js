@@ -118,10 +118,12 @@ function parseMatches(text, code, season) {
       odds: {
         pinPre: triple(row, 'PS'),
         pinClose: triple(row, 'PSC'),
+        avgPre: triple(row, 'Avg'),
         maxPre: triple(row, 'Max'),
         maxClose: triple(row, 'MaxC'),
         ouPinPre: pair(row, 'P>2.5', 'P<2.5'),
         ouPinClose: pair(row, 'PC>2.5', 'PC<2.5'),
+        ouAvgPre: pair(row, 'Avg>2.5', 'Avg<2.5'),
         ouMaxPre: pair(row, 'Max>2.5', 'Max<2.5'),
         ouMaxClose: pair(row, 'MaxC>2.5', 'MaxC<2.5'),
       },
@@ -411,6 +413,46 @@ function valueSim(records, model, book) {
   };
 }
 
+/**
+ * Line shopping (no model): the de-vigged pre-match market (`source`: Pinnacle or the market
+ * average) is the probability; a selection is taken when the best pre-match price across books
+ * beats it by at least `edge`. Judged like valueSim: ROI, CLV against the best closing price,
+ * close-EV against the de-vigged Pinnacle close.
+ */
+function lineShopSim(records, source, edge) {
+  const bets = [];
+  for (const r of records) {
+    const o = r.m.odds;
+    const p1x2 = source === 'pin' ? devig(o.pinPre) : validOdds(o.avgPre) ? devig(o.avgPre) : null;
+    const outs = [0, 1, 2].map((i) => ({ p: p1x2 ? p1x2[i] : NaN, pre: o.maxPre[i], close: o.maxClose[i], pc: vec(r.preds.PIN_CLOSE)[i], win: outcome(r.m) === i }));
+    if (r.ouOk && validOdds(o.ouMaxPre) && validOdds(o.ouMaxClose)) {
+      const src = source === 'pin' ? o.ouPinPre : o.ouAvgPre;
+      const pOu = validOdds(src) ? devig(src) : [NaN, NaN];
+      const pc = r.preds.PIN_CLOSE.over;
+      outs.push({ p: pOu[0], pre: o.ouMaxPre[0], close: o.ouMaxClose[0], pc, win: isOver(r.m) === 1 });
+      outs.push({ p: pOu[1], pre: o.ouMaxPre[1], close: o.ouMaxClose[1], pc: 1 - pc, win: isOver(r.m) === 0 });
+    }
+    for (const s of outs) {
+      if (!Number.isFinite(s.p) || !(s.pre > 1) || !(s.close > 1)) continue;
+      const ev = s.p * s.pre - 1;
+      if (ev < edge || s.pre < RULE.oddsMin || s.pre > RULE.oddsMax) continue;
+      bets.push({ profit: s.win ? s.pre - 1 : -1, clv: s.pre / s.close - 1, closeEv: s.pc * s.pre - 1, ev });
+    }
+  }
+  const profits = bets.map((b) => b.profit);
+  const closeEvs = bets.map((b) => b.closeEv);
+  return {
+    bets: bets.length,
+    meanModelEv: mean(bets.map((b) => b.ev)),
+    roi: mean(profits),
+    roiCI: bootCI(profits, 2000, 13),
+    meanClv: mean(bets.map((b) => b.clv)),
+    beatClose: mean(bets.map((b) => (b.clv > 0 ? 1 : 0))),
+    closeEv: mean(closeEvs),
+    closeEvCI: bootCI(closeEvs, 2000, 14),
+  };
+}
+
 // ---------- run ----------
 
 async function main() {
@@ -515,6 +557,13 @@ async function main() {
   // A blend with weight 0 is the market itself: nothing to select.
   const simModels = ['FVIS k=8', best.FVIS, best.DC, ...(blendW > 0 ? ['BLEND'] : [])].filter((v, i, a) => a.indexOf(v) === i);
   const value = Object.fromEntries(simModels.map((n) => [n, { pinTest: valueSim(test, n, 'pin'), maxTest: valueSim(test, n, 'max'), pinTune: valueSim(tune, n, 'pin'), maxTune: valueSim(tune, n, 'max') }]));
+  const lineShop = [];
+  for (const source of ['pin', 'avg']) {
+    for (const edge of [0.02, 0.05]) {
+      lineShop.push({ source, edge, set: 'tuning', ...lineShopSim(tune, source, edge) });
+      lineShop.push({ source, edge, set: 'test', ...lineShopSim(test, source, edge) });
+    }
+  }
   const rhoTest = mean(test.map((r) => r.rho[XI_GRID.indexOf(Number(best.DC.split('=')[1]))]));
 
   const result = {
@@ -535,6 +584,7 @@ async function main() {
     draws,
     calibration: calib,
     value,
+    lineShop,
     rule: RULE,
     meanRhoTest: rhoTest,
     runtimeSeconds: Math.round((Date.now() - started) / 1000),
@@ -602,6 +652,10 @@ function summary(r, report, label) {
       L.push(`| ${label(n)} | ${set} | ${book} | ${s.bets} | ${spc(s.meanModelEv)} | ${spc(s.roi)} ${ci(s.roiCI, spc)} | ${spc(s.meanClv)} | ${pc(s.beatClose)} | ${spc(s.closeEv)} ${ci(s.closeEvCI, spc)} |`);
     }
   }
+  L.push('', '## Line shopping (no model)', '');
+  L.push('Probability = de-vigged pre-match market (pin = Pinnacle, avg = market average); price = best pre-match price across books (Max); taken when p × price − 1 ≥ edge and price 1.3–6; 1X2 and O/U 2.5. CLV against the best closing price; close-EV against the de-vigged Pinnacle close.', '');
+  L.push('| Source | Edge | Set | Bets | mean EV vs source | ROI [95% CI] | mean CLV | beat close | close-EV [95% CI] |', '|---|---|---|---|---|---|---|---|---|');
+  for (const s of r.lineShop) L.push(`| ${s.source} | ${spc(s.edge)} | ${s.set} | ${s.bets} | ${spc(s.meanModelEv)} | ${spc(s.roi)} ${ci(s.roiCI, spc)} | ${spc(s.meanClv)} | ${pc(s.beatClose)} | ${spc(s.closeEv)} ${ci(s.closeEvCI, spc)} |`);
   L.push('');
   return L.join('\n');
 }
