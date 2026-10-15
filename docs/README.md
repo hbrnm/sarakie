@@ -22,6 +22,7 @@ Phase 0 — Foundation and Architecture. Governance: [`../CLAUDE.md`](../CLAUDE.
 | 15 | [Phase 1 runbook](15-phase-1-runbook.md) | Bot creation and Render deployment steps |
 | 16 | [Phase 2 plan](16-phase-2-plan.md) | Increments 2.1–2.3 and status |
 | 17 | [Phase 3 engine](17-phase-3-engine.md) | Quantitative engine, tests, preliminary real-data check |
+| 18 | [Phase 4 risk and explanations](18-phase-4-risk-and-explanations.md) | Status classification, Gemini boundary, validation |
 
 ## Conventions used in all documents
 

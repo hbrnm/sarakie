@@ -11,7 +11,7 @@
 - GitHub repository: https://github.com/hbrnm/sarakie
 - Repository name: sarakie
 - Version: 1.0.0
-- Current stage: PHASE 3 completed 2026-10-15; PHASE 4 awaiting authorization
+- Current stage: PHASE 4 — Risk engine and explanations (Phase 3 completed 2026-10-15)
 - Product Owner: User
 
 FVIS is a private football value intelligence system designed to identify, quantify, explain and track potentially mispriced football betting markets.
@@ -562,5 +562,6 @@ Dated record of Product Owner approvals. It updates §15 without rewriting it.
 | 2026-10-15 | **Phase 2 complete**: `/fixtures` and `/quota` verified by the PO in Telegram after Supabase variables were set on Render. |
 | 2026-10-15 | Phase 2 docs merged; `/health` database status approved; **Phase 3 (Quantitative engine) authorized** per `docs/04-quantitative-model-spec.md`. No Telegram output of model results until Phases 4–5. |
 | 2026-10-15 | **Phase 3 complete**: merge of `feature/phase-3-engine` into `main` approved. |
+| 2026-10-15 | **Phase 4 (Risk engine and explanations) authorized**, odds freshness option A: the scanner uses odds captured in the same run (≤ 6 h); on-demand analysis fetches fresh odds for the requested fixture (≤ 2 h), within the on-demand credit cap. |
 
-Phase 4 and all later phases remain **not authorized** until explicitly approved.
+Phase 5 and all later phases remain **not authorized** until explicitly approved.

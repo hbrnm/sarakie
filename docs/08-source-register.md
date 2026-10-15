@@ -55,7 +55,7 @@ Additional observation (probe run): the `/status` counter showed 1 request used 
 |---|---|---|---|
 | S-40 | Free-tier content is used to improve Google products; paid-tier content is not | SECONDARY (Google pricing page via search) | [ai.google.dev pricing](https://ai.google.dev/pricing), [billing docs](https://ai.google.dev/gemini-api/docs/billing) |
 | S-41 | Free-tier rate limits vary by model (third-party figures, e.g. Flash about 10 RPM / 250 RPD) | SECONDARY, volatile | [apisrouter](https://apisrouter.com/gemini-ai-free) |
-| S-42 | Free tier may be unavailable to users in the EEA/UK/Switzerland | UNVERIFIED, **relevant (PO in Romania)** | single third-party claim; must be checked in Google's current Gemini API terms |
+| S-42 | Free tier in the EEA/UK/Switzerland | Billing FAQ: free use possible in the EEA; secondary sources: apps serving EEA end users need the paid tier; wording ambiguous. FVIS is private (developer = sole user). Still UNVERIFIED against the Additional Terms | [billing](https://ai.google.dev/gemini-api/docs/billing), [forum](https://discuss.ai.google.dev/t/free-tier-gemini-api-and-uk-eea-ch-does-you-re-in-the-uk-mean-the-developer-or-the-end-users/188180) |
 
 ## Alternative / supplementary sources (not approved; for evaluation only)
 

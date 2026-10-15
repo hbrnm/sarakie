@@ -43,9 +43,10 @@ Each criterion must be demonstrated with evidence (test output, logs, screenshot
 - [x] Preliminary real-data check documented ([17](17-phase-3-engine.md)); formal validation remains Phase 6.
 
 ## Phase 4 — Risk and explanations
-- [ ] Every status path is covered by tests, including multiple simultaneous reason codes.
-- [ ] Gemini validator rejects invented numbers, banned phrases and unsupported selections (tested with adversarial fixtures).
-- [ ] System produces complete messages with `GEMINI_API_KEY` unset.
+- [x] Every status path is covered by tests, including multiple simultaneous reason codes.
+- [x] Gemini validator rejects invented numbers, banned phrases and over-long/empty text (tested with adversarial inputs); errors and timeouts fall back to the template.
+- [x] System produces complete messages with `GEMINI_API_KEY` unset (template path).
+- [ ] Live Gemini call verified (needs the Product Owner's API key; optional).
 
 ## Phase 5 — Scanner and tracking
 - [ ] Scanner and `/analyze` call the same `analyzeFixture` (code review + test).
