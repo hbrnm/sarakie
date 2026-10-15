@@ -579,5 +579,6 @@ Dated record of Product Owner approvals. It updates §15 without rewriting it.
 | 2026-10-15 | **D-22** approved: the morning digest opens with a short "SELECȚIILE ZILEI (QUALIFIED)" list (presentation only); merge of `feature/digest-daily-picks` into `main` approved. |
 | 2026-10-15 | **Phase 6b (comparative model backtest) authorized** — measurement only; production model unchanged. Results in `docs/21-phase-6b-backtest-results.md`. Repository made public by the PO (GitHub Actions minutes). |
 | 2026-10-15 | **D-23** approved: `QUALIFIED` suspended (risk 1.2.0); 6b line-shopping backtest approved; merge of `spike/model-backtest` and `feature/suspend-qualified` into `main` approved. |
+| 2026-10-15 | PRs #1 and #2 merged by the PO. **Phase 6c (line-shopping live feasibility) authorized**: measurement only; results in `docs/22-phase-6c-line-shopping-feasibility.md`. |
 
-Phase 6 (except the 6a feasibility study and the 6b backtest) and later phases remain **not authorized** until explicitly approved.
+Phase 6 (except the 6a feasibility study, the 6b backtest and the 6c measurement) and later phases remain **not authorized** until explicitly approved.
