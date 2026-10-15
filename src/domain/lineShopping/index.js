@@ -176,14 +176,32 @@ function meanCi(values) {
   return { n, mean, low: mean - half, high: mean + half };
 }
 
+// Two-sided 95% Student t quantiles t(0.975, df), df = 1..10 (standard tables).
+const T975 = Object.freeze({ 1: 12.706, 2: 4.303, 3: 3.182, 4: 2.776, 5: 2.571, 6: 2.447, 7: 2.365, 8: 2.306, 9: 2.262, 10: 2.228 });
+const Z975 = 1.95996398;
+
+/**
+ * Student t quantile t(0.975, df) for a two-sided 95% interval. Pure, no dependencies:
+ * table for df 1..10, above that the Cornish–Fisher expansion around z = 1.95996398
+ *   t ≈ z + 2.37227 / df + 2.8225 / df² + 2.55 / df³
+ * (error below 1e-4 for df > 10; tends to z as df grows).
+ * @param {number} df degrees of freedom, an integer ≥ 1
+ */
+function getTQuantile975(df) {
+  if (!Number.isInteger(df) || df < 1) throw new RangeError(`invalid degrees of freedom: ${df}`);
+  if (df <= 10) return T975[df];
+  return Z975 + 2.37227 / df + 2.8225 / (df * df) + 2.55 / (df * df * df);
+}
+
 /**
  * Mean with a 95% confidence interval clustered by `cluster` (the fixture: selections of one
  * match, scopes and re-scans are correlated). The mean is the plain mean over observations;
  * its variance is the cluster-robust (CR1) estimate
  *   Var = G / (G − 1) · Σ_g (Σ_{i∈g} (x_i − mean))² / N²
- * with G clusters and N observations, and the interval is mean ± 1.96 · √Var (normal
- * approximation, docs/23 §9). With one observation per cluster it equals meanCi.
- * With fewer than 2 clusters there is no interval.
+ * with G clusters and N observations, and the interval is mean ± t(0.975, G − 1) · √Var
+ * (docs/23 §9.2, Phase 6d.1): with few fixtures the t quantile widens the interval where
+ * the normal 1.96 would be optimistic. With one observation per cluster the standard error
+ * equals meanCi's. With fewer than 2 clusters there is no interval.
  * @param {{ value: number, cluster: string }[]} observations
  */
 function clusterMeanCi(observations) {
@@ -197,7 +215,8 @@ function clusterMeanCi(observations) {
   // Clusters are summed in key order so the result does not depend on row order.
   const ss = [...clusters.keys()].sort().reduce((a, k) => a + clusters.get(k) ** 2, 0);
   const se = Math.sqrt(((g / (g - 1)) * ss) / (n * n));
-  return { n, clusters: g, mean, se, low: mean - 1.96 * se, high: mean + 1.96 * se };
+  const t = getTQuantile975(g - 1);
+  return { n, clusters: g, mean, se, low: mean - t * se, high: mean + t * se };
 }
 
-module.exports = { evaluateLineShopping, settleLineCandidate, meanCi, clusterMeanCi, median, SCOPES };
+module.exports = { evaluateLineShopping, settleLineCandidate, meanCi, clusterMeanCi, getTQuantile975, median, SCOPES };

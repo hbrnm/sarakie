@@ -23,7 +23,7 @@ function marketViewLines({ event, consensus }) {
   if (consensus.latestCapturedAt) {
     when = `, cote de la ${formatTime(new Date(consensus.latestCapturedAt))}`;
     const hours = Math.floor((Date.parse(event.kickoffUtc) - Date.parse(consensus.latestCapturedAt)) / 3600000);
-    if (hours >= STALE_BEFORE_KICKOFF_HOURS) when += `, cu ${hours} h înainte de start: se pot fi mișcat`;
+    if (hours >= STALE_BEFORE_KICKOFF_HOURS) when += `, capturate cu ${hours} h înainte de start — este posibil să se fi mișcat`;
   }
   return [head, parts.length ? `  piață: ${parts.join(' · ')} (${books} case${when})` : '  piață: fără cote complete'];
 }

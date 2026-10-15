@@ -85,7 +85,7 @@ Details and choices made during implementation:
 - **Counting for §5**: each fixture selection counts once per scope, with its **first** `LINE_VALUE` row (the moment the price would have been taken).
 - **Closing odds**: the `Line settle` step re-imports the current season from football-data.org and football-data.co.uk (same code as `backfill-history`, about 11 football-data.org requests, 0 odds credits). A finished candidate is settled once the Pinnacle close is stored; if it is still missing 10 days after kickoff, it is settled without CLV. Cancelled/awarded fixtures are `VOID`.
 - **Scope limits**: domestic leagues only. UCL/UEL have no closing odds in football-data.co.uk (and UEL no results source), so their candidates could not be evaluated.
-- **95% CI** is a normal approximation that treats selections as independent; selections of one match are not, so it is approximate (shown in `/clv`). Superseded by the fixture-clustered CI in §9.
+- **95% CI** is a normal approximation that treats selections as independent; selections of one match are not, so it is approximate (shown in `/clv`). Superseded by the fixture-clustered t interval in §9.2 and §9.5.
 
 Verification: unit tests for the rule, settlement, report and messages, a scanner test with a Unibet `LINE_VALUE` pick, database assertions (`supabase/tests/line_candidates.test.sql`) and the backup round-trip, run locally on PostgreSQL 16.
 
@@ -120,13 +120,13 @@ p_i = r_i^k
 Rows of one fixture are correlated (several selections, two scopes, re-scans), so an IID interval is too narrow.
 
 - `/clv` reports, per scope, `N_candidates` (counted candidates with a Pinnacle close) and `N_fixtures` (distinct `fixture_id` among them).
-- Mean CLV and mean close-EV keep the candidate mean. The 95% CI is `mean ± 1.96 · SE` with the cluster-robust (CR1) variance at fixture level:
+- Mean CLV and mean close-EV keep the candidate mean. The 95% CI is `mean ± t(0.975, G − 1) · √Var_CR1` (Student t with `G − 1` degrees of freedom since Phase 6d.1, §9.5) with the cluster-robust (CR1) variance at fixture level:
 
   ```
   Var = G / (G − 1) · Σ_g ( Σ_{i ∈ g} (x_i − mean) )² / N²
   ```
 
-  with `G` fixtures and `N` candidates (`clusterMeanCi`, `src/domain/lineShopping/index.js`). With one candidate per fixture it equals the previous IID interval; with fewer than 2 fixtures no interval is shown.
+  with `G` fixtures and `N` candidates (`clusterMeanCi`, `src/domain/lineShopping/index.js`). With one candidate per fixture the standard error equals the IID one; with fewer than 2 fixtures no interval is shown.
 - The §5 verdict uses this interval. **Readiness gate amended by the PO (D-25, 2026-10-15, before any `1.1.0` candidate was counted):** a verdict needs at least 6 weeks, at least 150 candidates with a Pinnacle close **and** at least 75 distinct fixtures among them (`MIN_FIXTURES`, `src/domain/lineShopping/report.js`). `/clv` shows `N_fixtures` next to the candidate count.
 - `/clv` counts only candidates of the current rule version (`1.1.0`); rows of earlier versions stay in the database and are reported as a count. The test clock (6 weeks) starts at the first `1.1.0` candidate.
 
@@ -140,3 +140,9 @@ Lead time = `kickoff_utc − created_at` of the counted candidate row (the scann
 - New: the webhook answers `200` **before** processing the update (replies go through the Bot API), so a slow `/analyze` after a cold start (fresh odds, optional Gemini) no longer keeps Telegram waiting and causing re-deliveries. A failed update is logged and not retried. On shutdown the service lets accepted updates finish (up to 5 s).
 - Limit: the de-duplication memory is lost on restart; since every update is acknowledged on arrival, Telegram has nothing to re-deliver from before the restart.
 - Test: `test/webhook-idempotency.test.js` delivers the same `/analyze` update three times (once while the first is still waiting for odds) through the HTTP server, bot and on-demand analyzer: one odds call, one run, one reply.
+
+### 9.5 Phase 6d.1 (D-27, 2026-10-15)
+
+- **t quantile.** The `/clv` interval multiplies the CR1 standard error by `t(0.975, G − 1)` instead of the normal `1.96`: `mean ± t_{0.975, G−1} · √Var_CR1`. `getTQuantile975(df)` (`src/domain/lineShopping/index.js`, pure, no dependencies) uses the standard table for `df` 1–10 (12.706 … 2.228) and above that the Cornish–Fisher expansion around `z = 1.95996398`: `t ≈ z + 2.37227/df + 2.8225/df² + 2.55/df³` (within 0.001 of tabulated values, e.g. 1.9925 at `df = 74`; tends to 1.960). CR1 variance, candidate mean and the verdict thresholds (6 weeks, 150 candidates, 75 fixtures) are unchanged; fewer than 2 fixtures still give no interval. Effect: with few fixtures the interval is much wider (2 fixtures: ×6.5), at the 75-fixture gate about 1.7% wider than with 1.96.
+- **Cup view wording.** Odds captured at least 3 h before kickoff now read `cote de la 11:37, capturate cu 10 h înainte de start — este posibil să se fi mișcat`.
+- **Limitations.** The interval is no longer a normal approximation; it is still an asymptotic (CR1 + t) interval, which can be optimistic when a few fixtures carry most candidates.
