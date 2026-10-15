@@ -7,6 +7,11 @@ on:
   schedule:
     - cron: '17 10 * * *'
   workflow_dispatch:
+    inputs:
+      send_test:
+        description: 'Only send a test message to the allowlisted users (checks the Telegram secrets)'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -28,4 +33,5 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_ALLOWED_USER_IDS: ${{ secrets.TELEGRAM_ALLOWED_USER_IDS }}
+          SEND_TEST: ${{ inputs.send_test && '1' || '' }}
         run: node scripts/scan-watchdog.js

@@ -16,6 +16,13 @@ async function main() {
       process.exit(2);
     }
   }
+  if (env.SEND_TEST === '1') {
+    const sender = createTelegramSender({ token: env.TELEGRAM_BOT_TOKEN });
+    const ids = [...parseAllowedUserIds(env.TELEGRAM_ALLOWED_USER_IDS)];
+    for (const id of ids) await sender.send(id, 'FVIS: mesaj de test din GitHub Actions — secretele Telegram funcționează.');
+    console.log(`Test message sent to ${ids.length} chat(s).`);
+    return;
+  }
   const db = createSupabase({ url: env.SUPABASE_URL, serviceRoleKey: env.SUPABASE_SERVICE_ROLE_KEY });
   const r = await scanWatchdog({
     store: createAnalysisStore(db),
