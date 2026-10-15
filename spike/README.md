@@ -66,3 +66,14 @@ ClubElo and football-data.co.uk (main and extra leagues) cover, the depth of Clu
 which historical UEFA seasons the football-data.org free tier serves, and what the
 openfootball repositories contain. Output: aggregates and public club names only
 (`summary-6a.md`, `report-6a.json`). Results are written up in `docs/22-phase-6a-cup-feasibility.md`.
+
+## model-backtest.js (Phase 6b)
+
+Comparative walk-forward backtest on football-data.co.uk seasons 2019/20–2025/26 (5 domestic
+leagues), run by `.github/workflows/model-backtest.yml`. Compares league base rates, the
+production engine (FVIS v1, `src/domain/model/estimate.js`) and its shrinkage `k`, a weighted
+Poisson MLE with time decay, Dixon-Coles, a model/market blend and the Pinnacle pre-match and
+closing markets: log loss, Brier, calibration, and FVIS-like paper selections (ROI, CLV,
+closing-implied EV). Tuning seasons 2020–2023, test seasons 2024–2025. Measurement only: no
+secrets, no database writes. Local run with CSVs on disk:
+`BACKTEST_DATA_DIR=<dir with <season code>/<division>.csv> node spike/model-backtest.js`.
