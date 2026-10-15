@@ -58,7 +58,7 @@ test('/clv reports both scopes from stored rows (first LINE_VALUE row per select
   assert.match(text, /^Test pe hârtie line shopping \(Faza 6d, regula 1\.1\.0\), început 2026-10-15, 0\.3 săptămâni/);
   assert.match(text, /UNIBET \(casele tale\)\nCandidate: 1 · decontate: 1 \(1 câștigate\) · în așteptare: 0\nCu cotă de închidere Pinnacle: 1 candidate din 1 meciuri distincte \(prag: 150 candidate din cel puțin 75 meciuri\)\nCLV mediu: \+4\.0%\nEV la închidere: \+3\.0%\n/);
   assert.match(text, /După timpul până la start \(captură → start\):\n {2}< 12h: 0 candidate · CLV mediu n\/a · EV la închidere n\/a\n {2}12–48h: 0 candidate[^\n]*\n {2}altele \(> 48h\): 1 candidate · CLV mediu \+4\.0% · EV la închidere \+3\.0%\nROI pe hârtie: \+120\.0%/);
-  assert.match(text, /TOATE CASELE DIN SURSĂ\nCandidate: 2 · decontate: 2 \(1 câștigate\)[\s\S]*2 candidate din 2 meciuri distincte[\s\S]*EV la închidere: \+2\.0% \(IÎ 95%: \+0\.0% … \+4\.0%\)\n[\s\S]*ROI pe hârtie: \+10\.0%[\s\S]*Verdict: în curs/);
+  assert.match(text, /TOATE CASELE DIN SURSĂ\nCandidate: 2 · decontate: 2 \(1 câștigate\)[\s\S]*2 candidate din 2 meciuri distincte[\s\S]*EV la închidere: \+2\.0% \(IÎ 95%: −10\.7% … \+14\.7%\)\n[\s\S]*ROI pe hârtie: \+10\.0%[\s\S]*Verdict: în curs/);
   assert.match(text, /IÎ este grupat pe meci/);
   assert.match(text, /versiuni anterioare ale regulii \(1\) rămân în baza de date, dar nu intră în calcul/);
   assert.equal(db.table('analysis_runs').length, 0);

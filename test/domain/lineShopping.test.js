@@ -2,7 +2,7 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { evaluateLineShopping, settleLineCandidate, meanCi, clusterMeanCi, median } = require('../../src/domain/lineShopping');
+const { evaluateLineShopping, settleLineCandidate, meanCi, clusterMeanCi, getTQuantile975, median } = require('../../src/domain/lineShopping');
 const { defaultLineConfig, lineConfigHash, LINE_PARAMETERS, LINE_RULE_VERSION, devigMethodForRule } = require('../../src/domain/lineShopping/config');
 const { lineReport, leadBucket } = require('../../src/domain/lineShopping/report');
 const { devig, devigPower } = require('../../src/domain/odds');
@@ -210,12 +210,28 @@ test('report: first LINE_VALUE row per fixture selection and scope; verdict only
   assert.equal(lineReport([], { now: new Date(start) }).startedAt, null);
 });
 
-test('clusterMeanCi: equals meanCi with one observation per cluster; wider when a fixture repeats', () => {
+test('getTQuantile975: table for small df, Cornish–Fisher above, tends to 1.96', () => {
+  assert.equal(getTQuantile975(1), 12.706);
+  assert.equal(getTQuantile975(9), 2.262); // G = 10
+  assert.ok(getTQuantile975(9) > 2.2);
+  assert.ok(Math.abs(getTQuantile975(74) - 1.9925) < 0.001); // G = 75, table value 1.99254
+  assert.ok(Math.abs(getTQuantile975(10000) - 1.96) < 0.001);
+  // Cornish–Fisher against tabulated quantiles just above the table.
+  for (const [df, t] of [[11, 2.201], [20, 2.086], [30, 2.0423], [120, 1.9799]]) assert.ok(Math.abs(getTQuantile975(df) - t) < 0.001, `df ${df}`);
+  // Decreasing in df, always above z.
+  for (let df = 1; df < 200; df += 1) assert.ok(getTQuantile975(df) > getTQuantile975(df + 1) && getTQuantile975(df + 1) > 1.95996398);
+  for (const bad of [0, -1, 1.5, NaN, Infinity]) assert.throws(() => getTQuantile975(bad), RangeError);
+});
+
+test('clusterMeanCi: same SE as meanCi with one observation per cluster, t(G − 1) interval; wider when a fixture repeats', () => {
   const xs = [0.1, -0.1, 0.2, 0, 0.05, -0.02];
   const iid = meanCi(xs);
   const one = clusterMeanCi(xs.map((value, i) => ({ value, cluster: `f${i}` })));
   assert.equal(one.clusters, 6);
-  assert.ok(Math.abs(one.low - iid.low) < 1e-12 && Math.abs(one.high - iid.high) < 1e-12);
+  const iidSe = (iid.high - iid.mean) / 1.96;
+  assert.ok(Math.abs(one.se - iidSe) < 1e-12);
+  assert.ok(Math.abs(one.high - (one.mean + getTQuantile975(5) * one.se)) < 1e-12);
+  assert.ok(Math.abs(one.low - (one.mean - 2.571 * one.se)) < 1e-12);
 
   // The same three results seen twice each (correlated rows of one fixture): the mean is
   // unchanged, the naive IID interval shrinks, the clustered one does not.
