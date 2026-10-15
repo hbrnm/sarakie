@@ -8,13 +8,14 @@ Research date: 2026-10-15. Important limitation: this Claude session's network p
 
 | ID | Claim | Status | Source |
 |---|---|---|---|
-| S-01 | Free plan: 100 requests/day | SECONDARY | [api-football.com beginner guide](https://www.api-football.com/news/post/how-to-get-started-with-api-football-the-complete-beginners-guide), [api-sports.io football](https://api-sports.io/sports/football) |
+| S-01 | Free plan: 100 requests/day; base URL `v3.football.api-sports.io`; subscription valid 1 year | **VERIFIED** 2026-10-15 (PO dashboard screenshot: Football / Free / 100 per day / active until 2027-10-15) | API-Football dashboard, My Access |
 | S-02 | Free plan: about 10 requests/minute; daily quota resets 00:00 UTC | SECONDARY | third-party summaries ([thestatsapi.com](https://thestatsapi.com/blog/free-football-api-alternatives)) |
 | S-03 | All endpoints are available on the free plan | SECONDARY | [api-football.com pricing](https://www.api-football.com/pricing) |
 | S-04 | **Free plans are limited in available seasons**; the exact seasons are not stated publicly | SECONDARY, **critical** | [api-football.com pricing](https://www.api-football.com/pricing), [homepage](https://www.api-football.com/) |
 | S-05 | Recollection: free plan restricted to older seasons (not the current one) | UNVERIFIED, **critical** | Claude prior knowledge. If true, FVIS cannot run on the free plan for current fixtures and odds |
 | S-06 | Pre-match odds endpoint updated about once per day; historical odds limited by plan | SECONDARY (competitor blog, possible bias) | [oddspapi.io](https://oddspapi.io/blog/?p=3128) |
 | S-07 | Odds retention window for past fixtures | UNVERIFIED | no source found |
+| S-09 | Dashboard blocks access when it detects a proxy/VPN; the same detection might affect API calls from cloud IPs (GitHub Actions) | VERIFIED for dashboard (PO screenshot); UNVERIFIED for API | API-Football dashboard banner |
 | S-08 | Market coverage (1X2, DC, DNB, O/U 1.5/2.5/3.5, BTTS) and bookmaker count for the 5 leagues | UNVERIFIED | to be measured in Phase 2 |
 
 **Verification procedure (Phase 2a, approved D-01, option A):** run the manual workflow `provider-feasibility` (see [`spike/README.md`](../spike/README.md)) twice, at least 6 h apart. Record the results here with date and run ID (no key in logs).
