@@ -9,16 +9,19 @@ Research date: 2026-10-15. Important limitation: this Claude session's network p
 | ID | Claim | Status | Source |
 |---|---|---|---|
 | S-01 | Free plan: 100 requests/day; base URL `v3.football.api-sports.io`; subscription valid 1 year | **VERIFIED** 2026-10-15 (PO dashboard screenshot: Football / Free / 100 per day / active until 2027-10-15) | API-Football dashboard, My Access |
+| S-03b | League IDs discovered dynamically (2026): EPL 39, La Liga 140, Serie A 135, Bundesliga 78, Ligue 1 61; current season flag = 2026; `coverage.odds = true` | VERIFIED 2026-10-15 (probe). IDs are recorded for reference only and must still be discovered at runtime | probe run |
 | S-02 | Free plan: about 10 requests/minute; daily quota resets 00:00 UTC | SECONDARY | third-party summaries ([thestatsapi.com](https://thestatsapi.com/blog/free-football-api-alternatives)) |
 | S-03 | All endpoints are available on the free plan | SECONDARY | [api-football.com pricing](https://www.api-football.com/pricing) |
-| S-04 | **Free plans are limited in available seasons**; the exact seasons are not stated publicly | SECONDARY, **critical** | [api-football.com pricing](https://www.api-football.com/pricing), [homepage](https://www.api-football.com/) |
-| S-05 | Recollection: free plan restricted to older seasons (not the current one) | UNVERIFIED, **critical** | Claude prior knowledge. If true, FVIS cannot run on the free plan for current fixtures and odds |
+| S-04 | **Free plan season access is limited to seasons 2022–2024.** Seasons 2025 and 2026 (current) return the error `"Free plans do not have access to this season, try from 2022 to 2024."` | **VERIFIED** 2026-10-15 (probe run, GitHub Actions) | `provider-feasibility` run 2026-10-15T05:28Z |
+| S-05 | Free plan cannot serve current-season fixtures or odds | **VERIFIED** 2026-10-15. The same plan error is returned for current-season fixtures (7-day window) and odds in all 5 leagues | same run |
 | S-06 | Pre-match odds endpoint updated about once per day; historical odds limited by plan | SECONDARY (competitor blog, possible bias) | [oddspapi.io](https://oddspapi.io/blog/?p=3128) |
 | S-07 | Odds retention window for past fixtures | UNVERIFIED | no source found |
-| S-09 | Dashboard blocks access when it detects a proxy/VPN; the same detection might affect API calls from cloud IPs (GitHub Actions) | VERIFIED for dashboard (PO screenshot); UNVERIFIED for API | API-Football dashboard banner |
-| S-08 | Market coverage (1X2, DC, DNB, O/U 1.5/2.5/3.5, BTTS) and bookmaker count for the 5 leagues | UNVERIFIED | to be measured in Phase 2 |
+| S-09 | Dashboard blocks proxy/VPN access; API calls from GitHub Actions IPs | VERIFIED: dashboard blocks proxy/VPN (PO screenshot); **API calls from GitHub Actions succeed** (HTTP 200, 2026-10-15 run) | PO screenshot; probe run |
+| S-08 | Market coverage and bookmaker count for current fixtures | NOT MEASURABLE on free plan (blocked by S-04) | same run |
 
 **Verification procedure (Phase 2a, approved D-01, option A):** run the manual workflow `provider-feasibility` (see [`spike/README.md`](../spike/README.md)) twice, at least 6 h apart. Record the results here with date and run ID (no key in logs).
+
+Additional observation (probe run): the `/status` counter showed 1 request used after 16 probe requests. Requests rejected with a plan error may not count against the quota; this is UNVERIFIED and not relied upon.
 
 ## Render
 

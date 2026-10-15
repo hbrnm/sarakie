@@ -11,7 +11,7 @@ Status values: `APPROVED` (Product Owner), `CANDIDATE` (approved for evaluation,
 | ADR-005 | Supabase PostgreSQL | APPROVED | Free tier: 500 MB DB, pause after 1 week inactivity (SECONDARY, see [08](08-source-register.md)) |
 | ADR-006 | Render web service hosting | APPROVED | Free: spin-down after 15 min idle, ~1 min wake (SECONDARY) |
 | ADR-007 | GitHub Actions scheduled execution | APPROVED | Best effort; can be delayed or dropped |
-| ADR-008 | API-Football as data provider | CANDIDATE | **Blocking validation**: free-plan season access and odds coverage (see [13](13-open-decisions.md) D-01) |
+| ADR-008 | API-Football as data provider | CANDIDATE — **free plan fails for live use** | Phase 2a (2026-10-15): free plan limited to seasons 2022–2024; no current fixtures or odds. Usable at most as a historical-results source. See [13](13-open-decisions.md) D-02 |
 | ADR-009 | Independent Poisson baseline | APPROVED | Dixon-Coles deferred to Phase 6 |
 | ADR-010 | Scanner runs inside the GitHub Actions runner (option A) | APPROVED | [02 §2.1](02-architecture.md) |
 | ADR-011 | Historical results source for model fitting | PROPOSED | API-Football if free-plan seasons suffice; otherwise a second adapter for a free historical dataset (e.g. football-data.co.uk CSVs; terms to verify) |
