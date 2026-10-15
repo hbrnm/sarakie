@@ -56,6 +56,29 @@ Remaining:
 - Repositories in `src/persistence/`; Supabase-backed credit store replaces the in-memory one.
 - History backfill from football-data.co.uk (2 seasons × 5 leagues).
 
+## 2.2 history backfill — results (run 38704530362, 2026-10-15)
+
+Verified read-only on Supabase after the run:
+
+| League | Season | Fixtures (finished, scored) | With closing odds | Avg goals (home / away) |
+|---|---|---|---|---|
+| EPL | 2025 | 380 | 380 | 2.75 (1.53 / 1.22) |
+| EPL | 2026 | 60 | 60 | 2.95 (1.62 / 1.33) |
+| LALIGA | 2025 | 380 | 380 | 2.69 (1.57 / 1.12) |
+| LALIGA | 2026 | 78 | 78 | 3.09 (1.76 / 1.33) |
+| SERIEA | 2025 | 380 | 380 | 2.43 (1.28 / 1.15) |
+| SERIEA | 2026 | 60 | 60 | 2.87 (1.55 / 1.32) |
+| BUNDESLIGA | 2025 | 306 | 306 | 3.24 (1.78 / 1.46) |
+| BUNDESLIGA | 2026 | 43 | 43 | 3.86 (2.37 / 1.49) |
+| LIGUE1 | 2025 | 305 | 305 | 2.83 (1.59 / 1.24) |
+| LIGUE1 | 2026 | 54 | 54 | 2.91 (1.67 / 1.24) |
+
+- 2,046 finished fixtures; 110 canonical teams; all 110 football-data.co.uk team names mapped (alias 32, exact 70, token subset 8); no unmatched names.
+- 35,164 closing-odds rows (1X2 and O/U 2.5; bookmakers: Bet365, Pinnacle where present, market average, market maximum), all linked to fixtures.
+- Ligue 1 2025: 305 fixtures from football-data.org versus 306 CSV rows. One match is not reported as finished by football-data.org (likely awarded or annulled); to be checked, no impact on linking.
+- 31 provider requests logged, none containing a query string. Database size 20 MB of the 500 MB free limit.
+- Current-season samples are still small (43–78 matches per league), which is relevant for the model's sample-size gates (spec §6).
+
 ## 2.3 — Telegram data commands
 
 - `/fixtures [league]`: upcoming fixtures, including UCL/UEL marked "informativ".
