@@ -16,3 +16,6 @@ npm-debug.log*
 *.dump
 *.sql.gz
 exports/
+
+# Spike outputs
+spike-output/

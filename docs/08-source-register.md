@@ -17,7 +17,7 @@ Research date: 2026-10-15. Important limitation: this Claude session's network p
 | S-07 | Odds retention window for past fixtures | UNVERIFIED | no source found |
 | S-08 | Market coverage (1X2, DC, DNB, O/U 1.5/2.5/3.5, BTTS) and bookmaker count for the 5 leagues | UNVERIFIED | to be measured in Phase 2 |
 
-**Verification procedure (Phase 2, first task):** with a free key, call `/status`, `/leagues?id=<discovered>` (inspect `seasons[].coverage`), `/fixtures?league=&season=<current>`, `/odds?fixture=<upcoming>`, `/odds/bets`, `/odds/bookmakers`. Record the results here with date and HTTP evidence (no key in logs).
+**Verification procedure (Phase 2a, approved D-01, option A):** run the manual workflow `provider-feasibility` (see [`spike/README.md`](../spike/README.md)) twice, at least 6 h apart. Record the results here with date and run ID (no key in logs).
 
 ## Render
 

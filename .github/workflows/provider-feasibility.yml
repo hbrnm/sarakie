@@ -1,0 +1,32 @@
+# FVIS Phase 2a — API-Football free-plan feasibility probe (manual, measurement only).
+name: provider-feasibility
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run probe
+        env:
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+        run: |
+          node spike/provider-feasibility.js
+          cat spike-output/summary.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: provider-feasibility-${{ github.run_id }}
+          path: spike-output/
+          retention-days: 30
+          if-no-files-found: ignore
