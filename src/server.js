@@ -32,7 +32,7 @@ async function main() {
     const db = createSupabase(config.supabase);
     const budget = createCreditBudget({ store: createSupabaseCreditStore(db) });
     const queries = createQueries(db);
-    data = { upcoming: (q) => queries.upcoming(q), quota: () => queries.quota({ budget }) };
+    data = { upcoming: (q) => queries.upcoming(q), quota: () => queries.quota({ budget }), ping: () => queries.ping() };
   } else {
     logger.warn('data.unavailable', { reason: 'SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY not set' });
   }

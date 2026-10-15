@@ -65,7 +65,13 @@ function createQueries(db, { creditStore, now = () => new Date() } = {}) {
     return { odds: usage, requestsToday: today };
   }
 
-  return { upcoming, quota, creditStore };
+  /** Cheap connectivity check for /health: counts the seeded competitions. */
+  async function ping() {
+    const rows = unwrap(await db.from('competitions').select('code'), 'ping database');
+    return { competitions: rows.length };
+  }
+
+  return { upcoming, quota, ping, creditStore };
 }
 
 module.exports = { createQueries };

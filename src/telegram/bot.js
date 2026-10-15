@@ -46,7 +46,7 @@ function parseCommand(text, botUsername) {
  *   allowedUserIds: Set<number>,
  *   logger: { info: Function, warn: Function, error: Function },
  *   getStatus: () => { version: string, uptimeSeconds: number, now: Date },
- *   data?: { upcoming: Function, quota: Function } | null,
+ *   data?: { upcoming: Function, quota: Function, ping?: Function } | null,
  *   now?: () => Date,
  * }} deps
  */
@@ -68,7 +68,18 @@ function createBot({ token, allowedUserIds, logger, getStatus, data = null, now 
   const commands = {
     start: () => messages.startMessage(),
     help: () => messages.helpMessage(),
-    health: () => messages.healthMessage(getStatus()),
+    health: async () => {
+      let database = { state: 'not_configured' };
+      if (data && data.ping) {
+        try {
+          database = { state: 'connected', ...(await data.ping()) };
+        } catch (err) {
+          logger.error('health.database_failed', { error: err && err.message });
+          database = { state: 'error' };
+        }
+      }
+      return messages.healthMessage(getStatus(), database);
+    },
     fixtures: async (args) => {
       if (!data) return messages.dataUnavailableMessage();
       let code = null;

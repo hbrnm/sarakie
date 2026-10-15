@@ -36,9 +36,9 @@ function seed() {
 function botWith(t, db) {
   const queries = createQueries(db, { now: () => NOW });
   const budget = createCreditBudget({ store: createSupabaseCreditStore(db), now: () => NOW });
-  const data = db ? { upcoming: (q) => queries.upcoming(q), quota: () => queries.quota({ budget }) } : null;
+  const data = db ? { upcoming: (q) => queries.upcoming(q), quota: () => queries.quota({ budget }), ping: () => queries.ping() } : null;
   const { logger } = createMemoryLogger();
-  const bot = createBot({ token: VALID_ENV.TELEGRAM_BOT_TOKEN, allowedUserIds: new Set([USER]), logger, getStatus: () => ({}), data, now: () => NOW });
+  const bot = createBot({ token: VALID_ENV.TELEGRAM_BOT_TOKEN, allowedUserIds: new Set([USER]), logger, getStatus: () => ({ version: '0.1.0', uptimeSeconds: 5, now: NOW }), data, now: () => NOW });
   return { bot, calls: stubTelegram(bot, t) };
 }
 
@@ -108,4 +108,22 @@ test('league aliases and long lists are split under the Telegram limit', () => {
   const parts = fixturesMessages(mixed, { days: 7 });
   assert.ok(parts.length > 1);
   assert.ok(parts.every((p) => p.length <= 4096));
+});
+
+test('/health reports database status: connected, not configured, error', async (t) => {
+  const db = seed();
+  db.table('competitions').push(...['EPL', 'LALIGA', 'SERIEA', 'BUNDESLIGA', 'LIGUE1', 'UCL', 'UEL'].map((code) => ({ code })));
+  let r = botWith(t, db);
+  await r.bot.handleUpdate(messageUpdate({ userId: USER, text: '/health' }));
+  assert.match(r.calls[0].payload.text, /Bază de date: conectată \(7 competiții\)/);
+
+  r = botWith(t, null);
+  await r.bot.handleUpdate(messageUpdate({ userId: USER, text: '/health' }));
+  assert.match(r.calls.at(-1).payload.text, /Bază de date: neconfigurată/);
+
+  const broken = seed();
+  broken.from = () => { throw new Error('connection refused'); };
+  r = botWith(t, broken);
+  await r.bot.handleUpdate(messageUpdate({ userId: USER, text: '/health' }));
+  assert.match(r.calls.at(-1).payload.text, /Bază de date: eroare de conexiune/);
 });

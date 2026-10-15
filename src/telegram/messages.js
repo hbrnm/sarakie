@@ -40,13 +40,24 @@ function helpMessage() {
   ].join('\n');
 }
 
-/** @param {{ version: string, uptimeSeconds: number, now: Date }} status */
-function healthMessage({ version, uptimeSeconds, now }) {
+/**
+ * @param {{ version: string, uptimeSeconds: number, now: Date }} status
+ * @param {{ state: 'connected' | 'not_configured' | 'error', competitions?: number }} [database]
+ */
+function healthMessage({ version, uptimeSeconds, now }, database = null) {
+  const db = !database
+    ? null
+    : database.state === 'connected'
+      ? `Bază de date: conectată (${database.competitions} competiții)`
+      : database.state === 'not_configured'
+        ? 'Bază de date: neconfigurată (lipsesc SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY)'
+        : 'Bază de date: eroare de conexiune (detalii în log-ul serviciului)';
   return [
     'Stare: OK',
     `Versiune: ${version}`,
     `Rulează de: ${formatUptime(uptimeSeconds)}`,
     `Ora: ${formatForDisplay(now)}`,
+    ...(db ? [db] : []),
   ].join('\n');
 }
 
