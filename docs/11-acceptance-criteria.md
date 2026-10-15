@@ -25,7 +25,7 @@ Each criterion must be demonstrated with evidence (test output, logs, screenshot
 - [x] A webhook request without the correct secret header gets `401` (tested + smoke test).
 - [x] `/health` reports status without exposing secrets (tested, HTTP and Telegram).
 - [ ] Deployed on Render free. Cold-start reply time is measured and reported. *(Product Owner, see [15](15-phase-1-runbook.md))*
-- [ ] CI is green: lint, tests, `npm audit` (no high/critical findings). *(locally green; first GitHub run pending)*
+- [x] CI is green: lint, tests, `npm audit` (no high/critical findings). *(GitHub run 38689229255, 2026-10-15)*
 
 ## Phase 2 — Data integration
 - [ ] League IDs are discovered dynamically; nothing is hard-coded (code review + test).

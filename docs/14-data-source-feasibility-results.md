@@ -73,7 +73,7 @@ About 190 matches/month across the 5 leagues. All figures are estimates derived 
 
 ## 5. UEFA Champions League and Europa League (request 2026-10-15)
 
-Status: **OPEN (D-13)**. Not yet in scope.
+Status: **APPROVED 2026-10-15 (D-13)**: two-step approach below. UCL/UEL data availability (football-data.org tier, Odds API sport keys) must be verified at the start of Phase 2.
 
 | Aspect | Champions League | Europa League |
 |---|---|---|

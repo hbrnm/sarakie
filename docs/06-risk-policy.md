@@ -29,6 +29,7 @@ Every status carries `reason_codes[]` listing **all** failed gates, not only the
 | Promoted team | `PROMOTED_TEAM_NO_HISTORY` | spec §8 | PROVISIONAL |
 | Model applicability | `LAMBDA_OUT_OF_RANGE` | `λ_min ≤ λ ≤ λ_max`, `G ≤ 15` | PROVISIONAL |
 | Odds present | `ODDS_MISSING` | at least one quote for the selection | — |
+| Cross-league competition | `MODEL_NOT_APPLICABLE_CROSS_LEAGUE` | UCL/UEL fixtures until a validated cross-league extension exists (D-13) | — |
 | Odds not fetched | `ODDS_NOT_FETCHED` | market outside the scanner's credit plan (D-11: DC, DNB, BTTS, O/U 1.5/3.5 in the scanner) | — |
 | Odds validity | `ODDS_INVALID` | finite, `1.01 ≤ odds ≤ 100` | PROVISIONAL |
 | Odds freshness | `ODDS_STALE` | `now − captured_at ≤ max_odds_age` **and**, if present, `now − source_timestamp ≤ max_odds_age` | PROVISIONAL: 6 h (scanner), 2 h (on-demand) |

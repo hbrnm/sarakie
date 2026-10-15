@@ -48,7 +48,7 @@ On-demand results are persisted as predictions with `trigger = 'on_demand'`.
 
 | Dimension | Initial scope |
 |---|---|
-| Competitions | Premier League, La Liga, Serie A, Bundesliga, Ligue 1 (IDs discovered dynamically) |
+| Competitions | Premier League, La Liga, Serie A, Bundesliga, Ligue 1 (IDs discovered dynamically). UEFA Champions League and Europa League: information only (fixtures + odds, no value conclusions) until Phase 6 (D-13) |
 | Markets | 1X2, Double Chance, Draw No Bet, O/U 1.5, O/U 2.5, O/U 3.5, BTTS |
 | Match type | Pre-match only. In-play is out of scope. |
 | Time zone | Persist in UTC; display in `Europe/Bucharest` |

@@ -63,6 +63,8 @@ Initial scope:
 
 League identifiers must be discovered dynamically through the provider adapter. Never assume that league IDs are identical across seasons or providers.
 
+UEFA Champions League and Europa League (D-13, 2026-10-15): shown for information only (fixtures and odds, model output `INSUFFICIENT_DATA`) until a cross-league model extension is specified and validated in Phase 6.
+
 ### Technology stack
 
 - Runtime: Node.js
@@ -549,5 +551,6 @@ Dated record of Product Owner approvals. It updates §15 without rewriting it.
 | 2026-10-15 | D-02 option 1 (free-source combination) chosen; Phase 2b probe approved and merged to `main`. Spike-only secrets: `FOOTBALL_DATA_ORG_KEY`, `ODDS_API_KEY`. |
 | 2026-10-15 | D-10 (provider set), D-11 (market coverage under odds quota) approved. `docs/phase-2b-results` approved for merge. |
 | 2026-10-15 | **Phase 1 (Telegram and cloud skeleton) authorized** (D-12). Deployment is performed by the Product Owner on Render. |
+| 2026-10-15 | Merge of `feature/phase-1-skeleton` into `main` approved; D-13 (UCL/UEL two-step approach) approved. |
 
 Phase 2 and all later phases remain **not authorized** until explicitly approved.
