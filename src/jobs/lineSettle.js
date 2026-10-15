@@ -9,7 +9,8 @@ const DAY = 86400000;
  * once Pinnacle closing odds from football-data.co.uk are stored for it (imported by the same
  * workflow step), so CLV and close-EV are recorded with the result. If the closing odds are
  * still missing `closingWaitDays` after kickoff, the candidate is settled without them
- * (CLV null). Cancelled or awarded fixtures are VOID at once. Append-only and idempotent.
+ * (CLV null). Cancelled or awarded fixtures are VOID at once. The close is de-vigged with the
+ * method of the candidate's rule version (docs/23 §9). Append-only and idempotent.
  *
  * @param {{
  *   store: ReturnType<typeof import('../persistence/analysisStore').createAnalysisStore>,

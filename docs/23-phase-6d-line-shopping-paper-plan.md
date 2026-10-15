@@ -5,7 +5,7 @@ Evidence: `docs/21-phase-6b-backtest-results.md` §6 (positive closing-line edge
 
 ## 1. Decision D-24 (principle change)
 
-- For value candidates, the **probability source becomes the sharp market**: Pinnacle pre-match 1X2, de-vigged proportionally (CLAUDE.md §6). This amends CLAUDE.md §4.1 for this feature only: the Poisson model stays as a research reference and keeps feeding `/analyze` and the predictions table, but it no longer decides value.
+- For value candidates, the **probability source becomes the sharp market**: Pinnacle pre-match 1X2, de-vigged proportionally (CLAUDE.md §6) in rule 1.0.0, and with the **power method** from rule 1.1.0 (§9, D-25). This amends CLAUDE.md §4.1 for this feature only: the Poisson model stays as a research reference and keeps feeding `/analyze` and the predictions table, but it no longer decides value.
 - One pipeline (CLAUDE.md §4.5) is kept: the scanner and `/analyze` use the same line-shopping function.
 - FVIS stays decision support: no bet placement, no staking, no bankroll management (CLAUDE.md §7).
 - Gemini rules are unchanged: it may only explain the computed numbers.
@@ -42,7 +42,7 @@ O/U and other markets: not in scope, because Pinnacle O/U coverage in the curren
 
 ## 5. Success criteria (decided before the test starts)
 
-Evaluation after about 6 weeks or at least 150 settled candidates, whichever comes later:
+Evaluation after about 6 weeks or at least 150 settled candidates (from at least 75 distinct fixtures, D-25 §9.2), whichever comes later:
 
 | Outcome | Action |
 |---|---|
@@ -85,8 +85,58 @@ Details and choices made during implementation:
 - **Counting for §5**: each fixture selection counts once per scope, with its **first** `LINE_VALUE` row (the moment the price would have been taken).
 - **Closing odds**: the `Line settle` step re-imports the current season from football-data.org and football-data.co.uk (same code as `backfill-history`, about 11 football-data.org requests, 0 odds credits). A finished candidate is settled once the Pinnacle close is stored; if it is still missing 10 days after kickoff, it is settled without CLV. Cancelled/awarded fixtures are `VOID`.
 - **Scope limits**: domestic leagues only. UCL/UEL have no closing odds in football-data.co.uk (and UEL no results source), so their candidates could not be evaluated.
-- **95% CI** is a normal approximation that treats selections as independent; selections of one match are not, so it is approximate (shown in `/clv`).
+- **95% CI** is a normal approximation that treats selections as independent; selections of one match are not, so it is approximate (shown in `/clv`). Superseded by the fixture-clustered CI in §9.
 
 Verification: unit tests for the rule, settlement, report and messages, a scanner test with a Unibet `LINE_VALUE` pick, database assertions (`supabase/tests/line_candidates.test.sql`) and the backup round-trip, run locally on PostgreSQL 16.
 
 Known limitations: the Unibet SE/NL/FR price is a proxy for unibet.ro (UNVERIFIED); Pinnacle and the price come from one daily capture, so a price can move before the PO sees it; staleness is not detectable from The Odds API timestamps (6c §3); bookmakers that are beaten repeatedly typically limit accounts.
+
+## 9. Refinements (D-25, 2026-10-15)
+
+Requested by the PO after a quantitative review of the 6d setup. Implemented on branch `feature/phase-6d-refinements`; no schema change, append-only tables and triggers untouched.
+
+### 9.1 Power de-vig (rule `1.1.0`)
+
+Proportional normalization spreads the margin in proportion to the raw probabilities, so it leaves too much probability on longshots (favourite–longshot bias). In the 3.50–6.00 part of the odds range that inflates `p_pin`, hence the edge, and creates false `LINE_VALUE` candidates.
+
+Rule `1.1.0` de-vigs the Pinnacle 1X2 set with the **power method**:
+
+```
+r_i = 1 / odds_i            (raw implied, i ∈ {HOME, DRAW, AWAY})
+find k > 0 with Σ r_i^k = 1
+p_i = r_i^k
+```
+
+- Solver (`devigPower`, `src/domain/odds/index.js`): bisection on `k ∈ [1, 5]`, stopping when `|Σ r_i^k − 1| < 1e-9` or after 100 iterations. Deterministic (no randomness, fixed bracket and order). `Σ r_i^k` decreases in `k`, and with a margin `Σ r_i > 1` at `k = 1`, so the root is bracketed whenever `Σ r_i^5 < 1`.
+- Fallback to proportional normalization when there is no margin to remove (`Σ r_i ≤ 1`) or the root is outside `[1, 5]` (degenerate input). The result carries `method` and `k`.
+- Effect: with a margin, the longest-priced selection always gets a lower probability than under proportional normalization and the favourite a higher one. Example: 1.25 / 6.50 / 12.00 → away 8.0% proportional, 7.2% power.
+- The closing-line measures use the same convention: a candidate's Pinnacle close is de-vigged with the method of its own `rule_version` (`devigMethodForRule`: `1.0.0` → proportional, otherwise power). CLV (`price / close − 1`) does not depend on the de-vig.
+- Versioning: `LINE_RULE_VERSION = 1.1.0`, new parameter `devigMethod = 'power'` (PROVISIONAL), so `rule_config_hash` changes too. Existing `1.0.0` rows stay as recorded. The uniqueness key of `line_candidates` does not include the rule version: a re-run on odds snapshots already recorded under `1.0.0` inserts nothing; the next daily capture (new snapshots) is recorded under `1.1.0`.
+- `/analyze` shows the same function's output, so it uses the power method too.
+- Scope: only the line-shopping reference. The Poisson risk engine and the cup market view keep proportional de-vig (CLAUDE.md §6).
+
+### 9.2 `/clv`: fixture-clustered confidence intervals
+
+Rows of one fixture are correlated (several selections, two scopes, re-scans), so an IID interval is too narrow.
+
+- `/clv` reports, per scope, `N_candidates` (counted candidates with a Pinnacle close) and `N_fixtures` (distinct `fixture_id` among them).
+- Mean CLV and mean close-EV keep the candidate mean. The 95% CI is `mean ± 1.96 · SE` with the cluster-robust (CR1) variance at fixture level:
+
+  ```
+  Var = G / (G − 1) · Σ_g ( Σ_{i ∈ g} (x_i − mean) )² / N²
+  ```
+
+  with `G` fixtures and `N` candidates (`clusterMeanCi`, `src/domain/lineShopping/index.js`). With one candidate per fixture it equals the previous IID interval; with fewer than 2 fixtures no interval is shown.
+- The §5 verdict uses this interval. **Readiness gate amended by the PO (D-25, 2026-10-15, before any `1.1.0` candidate was counted):** a verdict needs at least 6 weeks, at least 150 candidates with a Pinnacle close **and** at least 75 distinct fixtures among them (`MIN_FIXTURES`, `src/domain/lineShopping/report.js`). `/clv` shows `N_fixtures` next to the candidate count.
+- `/clv` counts only candidates of the current rule version (`1.1.0`); rows of earlier versions stay in the database and are reported as a count. The test clock (6 weeks) starts at the first `1.1.0` candidate.
+
+### 9.3 `/clv`: time to kickoff
+
+Lead time = `kickoff_utc − created_at` of the counted candidate row (the scanner writes rows minutes after the daily 08:17 UTC capture). Computed in `lineReport` from existing columns; no schema change. Buckets, for candidates with a close: `< 12h`, `12–48h`, and `altele (> 48h)` (shown only if non-empty; the scanner horizon is 48 h). Each shows the count, mean CLV and mean close-EV. Descriptive only, no interval and no verdict per bucket.
+
+### 9.4 Webhook: prompt acknowledgement
+
+- The webhook already de-duplicated `update_id`s in memory (last 500). An id is marked before processing, so a re-delivery that arrives during a slow `/analyze` is dropped.
+- New: the webhook answers `200` **before** processing the update (replies go through the Bot API), so a slow `/analyze` after a cold start (fresh odds, optional Gemini) no longer keeps Telegram waiting and causing re-deliveries. A failed update is logged and not retried. On shutdown the service lets accepted updates finish (up to 5 s).
+- Limit: the de-duplication memory is lost on restart; since every update is acknowledged on arrival, Telegram has nothing to re-deliver from before the restart.
+- Test: `test/webhook-idempotency.test.js` delivers the same `/analyze` update three times (once while the first is still waiting for odds) through the HTTP server, bot and on-demand analyzer: one odds call, one run, one reply.

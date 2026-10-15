@@ -58,7 +58,7 @@ Mitigations, by order of preference:
 | Supabase unavailable / paused | Run `FAILED`. Telegram message "database unavailable" (sent directly through the Bot API). No partial writes outside a transaction |
 | Gemini error/invalid output | Template fallback; logged in `explanations` |
 | Telegram send failure | Retry 3 times; on failure the run is still recorded, and the digest can be re-sent with `/scan` |
-| Render cold start | Telegram retries undelivered webhook updates. Handlers must be idempotent on `update_id` |
+| Render cold start | Telegram retries undelivered webhook updates. The webhook acknowledges each update before processing it and drops repeated `update_id`s (in memory, last 500), so a slow `/analyze` cannot spend odds credits twice (`docs/23` §9.4) |
 
 ## 6. The blocking risk: API-Football free-plan season access
 

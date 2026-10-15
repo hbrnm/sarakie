@@ -17,7 +17,7 @@ function bookmakerLabel(key) {
 }
 
 const PLAYABLE_NOTE = 'Prețul Unibet vine de la site-urile Unibet SE/NL/FR și aproximează unibet.ro: verifică cota înainte. Betano, Superbet, Fortuna, MrBit și GSBet nu sunt acoperite de sursa de cote.';
-const PAPER_NOTE = 'Test pe hârtie (Faza 6d): probabilitatea vine din cotele Pinnacle fără marjă; FVIS nu dă sfaturi de pariere.';
+const PAPER_NOTE = 'Test pe hârtie (Faza 6d): probabilitatea vine din cotele Pinnacle fără marjă (metoda puterii); FVIS nu dă sfaturi de pariere.';
 
 /** One digest line for a LINE_VALUE candidate. */
 function pickLine({ match, kickoff }, s) {
@@ -56,25 +56,38 @@ const VERDICT = Object.freeze({
   STOP: 'fără avantaj: testul se oprește',
 });
 
+const LEAD_LABELS = Object.freeze([['lt12', '< 12h'], ['h12to48', '12–48h'], ['other', 'altele (> 48h)']]);
+
 /**
- * /clv reply from lineReport(): paper-test progress per scope (docs/23 §5).
+ * /clv reply from lineReport(): paper-test progress per scope (docs/23 §5, §9).
  * @param {ReturnType<typeof import('../domain/lineShopping/report').lineReport>} report
  */
 function clvMessage(report) {
-  if (!report.startedAt) return 'Testul pe hârtie (Faza 6d) nu are încă nicio candidată LINE_VALUE.';
+  const older = report.otherVersionRows
+    ? `Rândurile LINE_VALUE din versiuni anterioare ale regulii (${report.otherVersionRows}) rămân în baza de date, dar nu intră în calcul.`
+    : null;
+  if (!report.startedAt) return [`Testul pe hârtie (Faza 6d, regula ${report.ruleVersion}) nu are încă nicio candidată LINE_VALUE.`, older].filter(Boolean).join('\n');
   const ci = (m) => (m.mean === null ? 'n/a' : m.low === null ? signedPct(m.mean) : `${signedPct(m.mean)} (IÎ 95%: ${signedPct(m.low)} … ${signedPct(m.high)})`);
-  const lines = [`Test pe hârtie line shopping (Faza 6d), început ${report.startedAt.slice(0, 10)}, ${report.weeks.toFixed(1)} săptămâni`, ''];
+  const opt = (x) => (x === null ? 'n/a' : signedPct(x));
+  const lines = [`Test pe hârtie line shopping (Faza 6d, regula ${report.ruleVersion}), început ${report.startedAt.slice(0, 10)}, ${report.weeks.toFixed(1)} săptămâni`, ''];
   for (const [scope, title] of [['playable', 'UNIBET (casele tale)'], ['all', 'TOATE CASELE DIN SURSĂ']]) {
     const s = report.scopes[scope];
     lines.push(title);
     lines.push(`Candidate: ${s.candidates} · decontate: ${s.settled} (${s.wins} câștigate) · în așteptare: ${s.pending}`);
-    lines.push(`Cu cotă de închidere Pinnacle: ${s.withClosing} din minimum ${report.minSettled}`);
+    lines.push(`Cu cotă de închidere Pinnacle: ${s.withClosing} candidate din ${s.fixturesWithClosing} meciuri distincte (prag: ${report.minSettled} candidate din cel puțin ${report.minFixtures} meciuri)`);
     lines.push(`CLV mediu: ${ci(s.clv)}`);
     lines.push(`EV la închidere: ${ci(s.closeEv)}`);
+    lines.push('După timpul până la start (captură → start):');
+    for (const [b, label] of LEAD_LABELS) {
+      const x = s.byLead[b];
+      if (b === 'other' && !x.candidates) continue;
+      lines.push(`  ${label}: ${x.candidates} candidate · CLV mediu ${opt(x.clv)} · EV la închidere ${opt(x.closeEv)}`);
+    }
     lines.push(`ROI pe hârtie: ${s.roi === null ? 'n/a' : signedPct(s.roi)} (informativ, nu e criteriu)`);
     lines.push(`Verdict: ${VERDICT[s.verdict]}`, '');
   }
-  lines.push(`Criteriu (stabilit înainte de test): după cel puțin ${report.minWeeks} săptămâni și ${report.minSettled} candidate cu închidere, EV la închidere > 0 cu IÎ 95% peste 0 și CLV > 0. IÎ este aproximativ (selecțiile aceluiași meci nu sunt independente).`);
+  lines.push(`Criteriu (stabilit înainte de test): după cel puțin ${report.minWeeks} săptămâni și ${report.minSettled} candidate cu închidere din cel puțin ${report.minFixtures} meciuri distincte, EV la închidere > 0 cu IÎ 95% peste 0 și CLV > 0. IÎ este grupat pe meci (selecțiile aceluiași meci nu sunt independente).`);
+  if (older) lines.push(older);
   lines.push(PAPER_NOTE);
   return lines.join('\n');
 }

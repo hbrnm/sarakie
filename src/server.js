@@ -111,7 +111,8 @@ async function main() {
 
   const shutdown = (signal) => {
     logger.info('server.stopping', { signal });
-    server.close(() => process.exit(0));
+    // Updates are acknowledged before processing: let the accepted ones finish.
+    server.close(() => server.drain().then(() => process.exit(0)));
     setTimeout(() => process.exit(0), 5000).unref();
   };
   process.on('SIGTERM', () => shutdown('SIGTERM'));

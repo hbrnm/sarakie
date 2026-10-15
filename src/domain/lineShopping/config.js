@@ -6,11 +6,15 @@ const { canonicalJson } = require('../model/config');
 /**
  * Line-shopping rule (D-24, docs/23 §2). All thresholds PROVISIONAL: taken from the 6b
  * backtest and the 6c live measurement, not validated live. Phase 6d is the live paper test.
+ *
+ * Versions (docs/23 §9): 1.0.0 de-vigs Pinnacle proportionally; 1.1.0 uses the power method
+ * (favourite–longshot bias). Rows keep their rule_version, so both stay distinguishable.
  */
-const LINE_RULE_VERSION = '1.0.0';
+const LINE_RULE_VERSION = '1.1.0';
 
 const LINE_PARAMETERS = Object.freeze({
   sharpBookmaker: { value: 'pinnacle', class: 'PROVISIONAL', note: 'probability source: de-vigged Pinnacle 1X2' },
+  devigMethod: { value: 'power', class: 'PROVISIONAL', note: 'power method: Σ (1/odds)^k = 1; proportional overstates longshots' },
   minEdge: { value: 0.03, class: 'PROVISIONAL', note: '6b: edge positive from 2%; 3% leaves room for slippage' },
   minPriceOverMedian: { value: 1.03, class: 'PROVISIONAL', note: '6c: price must beat the market median, not only Pinnacle' },
   minOdds: { value: 1.3, class: 'PROVISIONAL', note: 'odds range as in 6b' },
@@ -28,8 +32,17 @@ function defaultLineConfig() {
   return Object.fromEntries(Object.entries(LINE_PARAMETERS).map(([k, p]) => [k, p.value]));
 }
 
+/**
+ * De-vig method of a recorded rule version, used for its closing-line measures, so a
+ * candidate is settled with the same convention it was found with.
+ * @param {string | null | undefined} ruleVersion
+ */
+function devigMethodForRule(ruleVersion) {
+  return ruleVersion === '1.0.0' ? 'proportional' : 'power';
+}
+
 function lineConfigHash(config) {
   return crypto.createHash('sha256').update(canonicalJson({ rule: LINE_RULE_VERSION, config })).digest('hex');
 }
 
-module.exports = { LINE_RULE_VERSION, LINE_PARAMETERS, defaultLineConfig, lineConfigHash };
+module.exports = { LINE_RULE_VERSION, LINE_PARAMETERS, defaultLineConfig, lineConfigHash, devigMethodForRule };

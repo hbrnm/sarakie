@@ -38,6 +38,56 @@ function devig(marketCode, oddsBySelection) {
   return { complete: true, pRaw, pFair, overround: sum - 1 };
 }
 
+const POWER_K_MIN = 1;
+const POWER_K_MAX = 5;
+const POWER_TOLERANCE = 1e-9;
+const POWER_MAX_ITERATIONS = 100;
+
+/**
+ * Power-method de-vig of one complete set (line shopping rule ≥ 1.1.0, docs/23 §9):
+ * find k > 0 with Σ p_raw_i^k = 1, then p_fair_i = p_raw_i^k. Unlike proportional
+ * normalization it takes more margin from longshots than from favourites (favourite–longshot
+ * bias). Deterministic bisection on k ∈ [1, 5]: stops when |Σ p_raw_i^k − 1| < 1e-9 or after
+ * 100 iterations. Falls back to proportional normalization when there is no margin to remove
+ * (Σ p_raw ≤ 1) or the root is not bracketed (degenerate input); `method` says which applied.
+ * @param {string} marketCode
+ * @param {Record<string, number>} oddsBySelection
+ * @returns {{ complete: true, pRaw: Record<string, number>, pFair: Record<string, number>, overround: number, method: 'power'|'proportional', k: number|null } | { complete: false, reason: string }}
+ */
+function devigPower(marketCode, oddsBySelection) {
+  const base = devig(marketCode, oddsBySelection);
+  if (!base.complete) return base;
+  const set = COMPLETE_SETS[marketCode];
+  const r = set.map((s) => base.pRaw[s]);
+  const excess = (k) => r.reduce((acc, x) => acc + x ** k, 0) - 1;
+  if (!(base.overround > 0) || !(excess(POWER_K_MAX) < 0)) return { ...base, method: 'proportional', k: null };
+  let lo = POWER_K_MIN;
+  let hi = POWER_K_MAX;
+  let k = (lo + hi) / 2;
+  for (let i = 0; i < POWER_MAX_ITERATIONS; i += 1) {
+    k = (lo + hi) / 2;
+    const f = excess(k);
+    if (Math.abs(f) < POWER_TOLERANCE) break;
+    if (f > 0) lo = k; // Σ p^k decreases in k (every p_raw < 1)
+    else hi = k;
+  }
+  const pFair = Object.fromEntries(set.map((s) => [s, base.pRaw[s] ** k]));
+  return { complete: true, pRaw: base.pRaw, pFair, overround: base.overround, method: 'power', k };
+}
+
+/**
+ * De-vig with a named method: 'proportional' (CLAUDE.md §6) or 'power' (see devigPower).
+ * @param {'proportional'|'power'} method
+ */
+function devigWith(method, marketCode, oddsBySelection) {
+  if (method === 'power') return devigPower(marketCode, oddsBySelection);
+  if (method === 'proportional') {
+    const d = devig(marketCode, oddsBySelection);
+    return d.complete ? { ...d, method: 'proportional', k: null } : d;
+  }
+  throw new RangeError(`unknown de-vig method: ${method}`);
+}
+
 /** Double Chance market reference from the same bookmaker's de-vigged 1X2 (spec §12). */
 function doubleChanceFrom1x2(pFair1x2) {
   const { HOME, DRAW, AWAY } = pFair1x2;
@@ -61,4 +111,4 @@ function expectedValueDnb({ win, loss }, odds) {
   return win * (odds - 1) - loss;
 }
 
-module.exports = { impliedProbability, devig, doubleChanceFrom1x2, dnbConditional, expectedValue, expectedValueDnb, COMPLETE_SETS };
+module.exports = { impliedProbability, devig, devigPower, devigWith, doubleChanceFrom1x2, dnbConditional, expectedValue, expectedValueDnb, COMPLETE_SETS };

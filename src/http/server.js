@@ -48,7 +48,10 @@ function readBody(req, limit) {
 
 /**
  * Keeps the most recent update_ids so that Telegram re-deliveries
- * (e.g. after a Render cold start) are processed only once.
+ * (e.g. after a Render cold start) are processed only once. An id is marked before its
+ * processing starts, so a re-delivery that arrives while the first is still running
+ * (a slow /analyze) is also dropped. In memory only: a restart forgets it, but by then
+ * every earlier update has been acknowledged (see createHttpServer).
  */
 function createUpdateDeduplicator(limit = SEEN_UPDATES_LIMIT) {
   const seen = new Set();
@@ -71,6 +74,7 @@ function createUpdateDeduplicator(limit = SEEN_UPDATES_LIMIT) {
  */
 function createHttpServer({ webhookPath, webhookSecret, handleUpdate, getStatus, logger }) {
   const isNew = createUpdateDeduplicator();
+  const inFlight = new Set();
 
   async function handleWebhook(req, res) {
     const provided = req.headers['x-telegram-bot-api-secret-token'];
@@ -94,16 +98,20 @@ function createHttpServer({ webhookPath, webhookSecret, handleUpdate, getStatus,
       return;
     }
     if (!isNew(update.update_id)) {
+      logger.info('http.webhook_duplicate', { updateId: update.update_id });
       sendJson(res, 200, { ok: true, duplicate: true });
       return;
     }
-    try {
-      await handleUpdate(update);
-    } catch (err) {
-      // Acknowledge anyway: a 5xx would make Telegram retry the same failing update.
-      logger.error('http.update_failed', { updateId: update.update_id, error: err && err.message });
-    }
+    // Acknowledge at once, then process: a slow command (/analyze after a cold start: fresh
+    // odds, optional Gemini) must not keep Telegram waiting, or it re-delivers the update.
+    // Replies go out through the Bot API, not the webhook response. A failure is logged and
+    // not retried (a retry could spend odds credits twice).
     sendJson(res, 200, { ok: true });
+    const job = Promise.resolve()
+      .then(() => handleUpdate(update))
+      .catch((err) => logger.error('http.update_failed', { updateId: update.update_id, error: err && err.message }))
+      .finally(() => inFlight.delete(job));
+    inFlight.add(job);
   }
 
   const server = http.createServer(async (req, res) => {
@@ -127,6 +135,10 @@ function createHttpServer({ webhookPath, webhookSecret, handleUpdate, getStatus,
   });
   server.requestTimeout = 30_000;
   server.headersTimeout = 15_000;
+  /** Resolves when every update accepted so far has been processed (shutdown, tests). */
+  server.drain = async () => {
+    while (inFlight.size) await Promise.all([...inFlight]);
+  };
   return server;
 }
 

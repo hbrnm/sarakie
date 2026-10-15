@@ -20,7 +20,7 @@ async function withServer(fn, { handleUpdate } = {}) {
   await new Promise((r) => server.listen(0, '127.0.0.1', r));
   const base = `http://127.0.0.1:${server.address().port}`;
   try {
-    await fn({ base, handled, lines });
+    await fn({ base, handled, lines, drain: () => server.drain() });
   } finally {
     await new Promise((r) => server.close(r));
   }
@@ -77,22 +77,41 @@ test('oversized webhook body returns 413', async () => {
 });
 
 test('valid update is handled once; redelivery is acknowledged but not reprocessed', async () => {
-  await withServer(async ({ base, handled }) => {
+  await withServer(async ({ base, handled, drain }) => {
     const body = JSON.stringify({ update_id: 77, message: { text: '/start' } });
     const h = { 'x-telegram-bot-api-secret-token': SECRET };
     assert.equal((await post(base, body, h)).status, 200);
     const second = await post(base, body, h);
     assert.equal(second.status, 200);
     assert.equal((await second.json()).duplicate, true);
+    await drain();
     assert.equal(handled.length, 1);
   });
 });
 
+test('the webhook is acknowledged before a slow update finishes processing', async () => {
+  let release;
+  const gate = new Promise((r) => { release = r; });
+  let done = false;
+  await withServer(
+    async ({ base, drain }) => {
+      const res = await post(base, JSON.stringify({ update_id: 78 }), { 'x-telegram-bot-api-secret-token': SECRET });
+      assert.equal(res.status, 200);
+      assert.equal(done, false); // 200 sent while the handler is still running
+      release();
+      await drain();
+      assert.equal(done, true);
+    },
+    { handleUpdate: async () => { await gate; done = true; } },
+  );
+});
+
 test('handler failure is logged and still acknowledged with 200', async () => {
   await withServer(
-    async ({ base, lines }) => {
+    async ({ base, lines, drain }) => {
       const res = await post(base, JSON.stringify({ update_id: 5 }), { 'x-telegram-bot-api-secret-token': SECRET });
       assert.equal(res.status, 200);
+      await drain();
       assert.ok(lines.some((l) => l.msg === 'http.update_failed'));
     },
     { handleUpdate: async () => { throw new Error('boom'); } },
