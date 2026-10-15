@@ -1,0 +1,37 @@
+# FVIS Phase 6b — comparative model backtest (measurement only, docs/12-validation-plan.md).
+# Read-only: football-data.co.uk public CSVs. No secrets, no database, no Telegram.
+# Runs on a push to the spike branch (football-data.co.uk is not reachable from Claude
+# sessions) or manually once the workflow is on the default branch.
+name: model-backtest
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [spike/model-backtest]
+    paths: [spike/model-backtest.js, .github/workflows/model-backtest.yml]
+
+permissions:
+  contents: read
+
+jobs:
+  backtest:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+      - run: npm ci --omit=dev
+      - name: Run backtest
+        run: |
+          node spike/model-backtest.js
+          cat spike-output/summary-6b.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: model-backtest-${{ github.run_id }}
+          path: spike-output/
+          retention-days: 30
+          if-no-files-found: ignore
