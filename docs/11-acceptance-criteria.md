@@ -25,7 +25,7 @@ Each criterion must be demonstrated with evidence (test output, logs, screenshot
 - [x] A webhook request without the correct secret header gets `401` (tested + smoke test).
 - [x] `/health` reports status without exposing secrets (tested, HTTP and Telegram).
 - [x] Deployed on Render free (2026-10-15; `/start`, `/health` verified by the Product Owner in Telegram).
-- [ ] Cold-start reply time measured and reported. *(pending: ≥ 20 min idle, then `/health`)*
+- [x] Cold-start reply time measured and reported: about 5 s after ≥ 20 min idle (Product Owner, 2026-10-15).
 - [x] CI is green: lint, tests, `npm audit` (no high/critical findings). *(GitHub run 38689229255, 2026-10-15)*
 
 ## Phase 2 — Data integration

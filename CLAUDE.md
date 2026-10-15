@@ -11,7 +11,7 @@
 - GitHub repository: https://github.com/hbrnm/sarakie
 - Repository name: sarakie
 - Version: 1.0.0
-- Current stage: PHASE 2 — Football data integration (Phase 1 deployed 2026-10-15; cold-start measurement pending)
+- Current stage: PHASE 2 — Football data integration (Phase 1 completed 2026-10-15)
 - Product Owner: User
 
 FVIS is a private football value intelligence system designed to identify, quantify, explain and track potentially mispriced football betting markets.
@@ -556,5 +556,6 @@ Dated record of Product Owner approvals. It updates §15 without rewriting it.
 | 2026-10-15 | **Phase 2 (Football data integration) authorized.** Requires a free Supabase project created by the Product Owner. |
 | 2026-10-15 | Merge of `feature/phase-2-data` (2.1) into `main` approved; Supabase project to be created by Claude through the Supabase connector (option B). |
 | 2026-10-15 | Supabase project `fvis` created in organization "atlasculinar" after connector relink (PO request). Merge of `feature/phase-2-persistence` (schema 2.2) into `main` approved. |
+| 2026-10-15 | Phase 1 complete: cold-start reply measured by PO at about 5 s. Merge of `feature/phase-2-persistence-code` into `main` approved. |
 
 Phase 3 and all later phases remain **not authorized** until explicitly approved.
