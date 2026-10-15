@@ -568,5 +568,6 @@ Dated record of Product Owner approvals. It updates §15 without rewriting it.
 | 2026-10-15 | Phase 5.1 merge into `main` approved; migration 3 (`predictions` and related tables) approved for Supabase. |
 | 2026-10-15 | Phase 5.2 (scanner, digest, `/scan`, watchdog) merge into `main` approved; manual `daily-sync` run with `scan_only` approved as live verification. PO added GitHub secrets `TELEGRAM_BOT_TOKEN`, `TELEGRAM_ALLOWED_USER_IDS`. |
 | 2026-10-15 | Telegram token fix (`ce69894`) merge approved. **D-18 option A** approved: selections involving a team with fewer than 10 matches in its model window are capped at WATCHLIST (risk rules 1.1.0). |
+| 2026-10-15 | GitHub `TELEGRAM_BOT_TOKEN` secret corrected by the PO; test message from Actions (`scan-watchdog` `send_test`) received. D-18 merge into `main` approved. |
 
 Phase 6 and later phases remain **not authorized** until explicitly approved.
