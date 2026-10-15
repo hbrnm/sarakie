@@ -37,9 +37,10 @@ Each criterion must be demonstrated with evidence (test output, logs, screenshot
 - [x] `/fixtures` and `/quota` verified by the Product Owner in Telegram (2026-10-15).
 
 ## Phase 3 — Quantitative engine
-- [ ] All tests in [04 §15](04-quantitative-model-spec.md) are implemented and passing.
-- [ ] Domain modules have no I/O imports (dependency check).
-- [ ] Determinism test passes (identical hash on repeated runs).
+- [x] All tests in [04 §15](04-quantitative-model-spec.md) are implemented and passing (`test/model/`).
+- [x] Domain modules have no I/O imports (`src/domain/model`, `src/domain/odds` import only domain code and `node:crypto`).
+- [x] Determinism test passes (identical canonical output on repeated runs and shuffled input).
+- [x] Preliminary real-data check documented ([17](17-phase-3-engine.md)); formal validation remains Phase 6.
 
 ## Phase 4 — Risk and explanations
 - [ ] Every status path is covered by tests, including multiple simultaneous reason codes.

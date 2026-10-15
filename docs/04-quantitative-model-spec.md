@@ -124,7 +124,8 @@ P(h, a) = Pois(h; λ_H) · Pois(a; λ_A),     h, a ∈ {0, …, G}
 Pois(x; λ) = e^{-λ} λ^x / x!     (computed iteratively: p₀ = e^{-λ}, p_{x+1} = p_x · λ/(x+1))
 ```
 
-- `G` chosen per fixture as the smallest integer such that both one-sided tails satisfy `P(X > G) < 1e-12`. A hard cap of `G = 15` applies; beyond it → `INSUFFICIENT_DATA` (`LAMBDA_OUT_OF_RANGE`).
+- `G` chosen per fixture as the smallest integer such that both one-sided tails satisfy `P(X > G) < 1e-12`. A hard cap of `G = 30` applies; beyond it → `INSUFFICIENT_DATA` (`LAMBDA_OUT_OF_RANGE`).
+  *Correction 2026-10-15 (Phase 3):* the original cap of 15 was inconsistent with the tolerance — at λ = 4.5 (= `λ_max`) the tail beyond 15 is about 2e-5 and G = 26 is needed. Numerical parameter only; no modelling change.
 - The matrix is **not renormalized**. The residual tail mass `ε = 1 − ΣP(h,a)` is stored as a diagnostic. Over/Under probabilities are computed from the cumulative side (§10), so truncation error is bounded by `ε`.
 - Float64 throughout. Results are rounded only at presentation time (probabilities 4 d.p., odds 2 d.p.). Persisted values keep full precision.
 
@@ -211,7 +212,7 @@ Price selection: EV is computed **per bookmaker quote**. The digest shows the be
 | `μ_h`, `μ_a` | computed | EMPIRICAL | per run |
 | `α_i`, `δ_i` | computed | EMPIRICAL | per run |
 | `λ_min`, `λ_max` | 0.2, 4.5 | PROVISIONAL | backtest percentiles |
-| tail tolerance | 1e-12, `G ≤ 15` | PROVISIONAL (numerical) | unit tests |
+| tail tolerance | 1e-12, `G ≤ 30` (corrected from 15) | PROVISIONAL (numerical) | unit tests |
 | `p_floor` | 0.02 | PROVISIONAL | Phase 6 |
 | `outlier_tol` | 0.05 | PROVISIONAL | Phase 6 |
 | promoted prior | disabled | AWAITING_VALIDATION | Phase 6 |
