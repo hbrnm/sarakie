@@ -23,6 +23,7 @@ Phase 0 — Foundation and Architecture. Governance: [`../CLAUDE.md`](../CLAUDE.
 | 16 | [Phase 2 plan](16-phase-2-plan.md) | Increments 2.1–2.3 and status |
 | 17 | [Phase 3 engine](17-phase-3-engine.md) | Quantitative engine, tests, preliminary real-data check |
 | 18 | [Phase 4 risk and explanations](18-phase-4-risk-and-explanations.md) | Status classification, Gemini boundary, validation |
+| 19 | [Session handoff](19-session-handoff.md) | State and next steps for the Phase 5 session |
 
 ## Conventions used in all documents
 
