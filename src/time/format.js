@@ -20,4 +20,19 @@ function formatForDisplay(date) {
   return `${formatter.format(date)} (ora României)`;
 }
 
-module.exports = { formatForDisplay, DISPLAY_TIME_ZONE };
+const kickoffFormatter = new Intl.DateTimeFormat('ro-RO', {
+  timeZone: DISPLAY_TIME_ZONE,
+  weekday: 'short',
+  day: '2-digit',
+  month: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: false,
+});
+
+/** Short kickoff label in Europe/Bucharest, e.g. "sâm. 18.10, 17:00". */
+function formatKickoff(date) {
+  return kickoffFormatter.format(date);
+}
+
+module.exports = { formatForDisplay, formatKickoff, DISPLAY_TIME_ZONE };

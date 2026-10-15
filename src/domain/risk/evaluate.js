@@ -129,7 +129,7 @@ function evaluateFixture({ fixture, estimate, quotes, fetchedMarkets, mode, now,
     const ev = isDnb ? expectedValueDnb(prob, best.decimalOdds) : expectedValue(prob.p, best.decimalOdds);
     const record = {
       ...base,
-      bestQuote: { bookmakerKey: best.bookmakerKey, bookmakerName: best.bookmakerName, decimalOdds: best.decimalOdds, capturedAt: best.capturedAt },
+      bestQuote: { bookmakerKey: best.bookmakerKey, bookmakerName: best.bookmakerName, decimalOdds: best.decimalOdds, capturedAt: best.capturedAt, snapshotId: best.snapshotId ?? null },
       pRaw: 1 / best.decimalOdds,
       pDevig: market.pDevig ?? null,
       overround: market.overround ?? null,

@@ -1,6 +1,6 @@
 # 20 — Phase 5 Plan: Scanner and Prediction Tracking
 
-Status: **PROPOSED** (2026-10-15). Phase 5 start requested by the Product Owner; this plan needs PO approval before any code is written (`CLAUDE.md` §12).
+Status: **APPROVED** by the Product Owner on 2026-10-15 (D-08, D-14 … D-17).
 
 ## 1. Verified starting state (2026-10-15)
 
@@ -65,3 +65,24 @@ Not yet present: `predictions`, `analysis_runs`, `model_versions`, `prediction_o
 - GitHub cron is best effort; the digest time is not guaranteed.
 - Render free sleep: the first `/analyze` after idle adds about 5 s.
 - All thresholds remain PROVISIONAL (D-06); QUALIFIED means eligible for paper tracking only.
+
+## 6. Sub-phase 5.1 — implementation (2026-10-15)
+
+| Deliverable | File |
+|---|---|
+| Migration 3: `model_versions`, `analysis_runs`, `predictions`, `prediction_outcomes`, `explanations`, `scan_digests`; append-only triggers, RLS | `supabase/migrations/20261015000003_predictions.sql` |
+| DB assertions (append-only, one digest per day, one outcome per prediction, value status needs odds and EV, no future `as_of`) | `supabase/tests/predictions.test.sql` |
+| Data access for the pipeline (fixtures, history, quotes through `odds_event_links`, runs, predictions) | `src/persistence/analysisStore.js` |
+| Shared pipeline `analyzeFixture` (history → `estimate` → quotes → `evaluateFixture` → `explainAnalysis`) and `inputHash` | `src/pipeline/analyzeFixture.js` |
+| `predictionRows` (16 rows per fixture) and `recordAnalysis` (skips identical inputs) | `src/pipeline/record.js` |
+| Best quote now carries its `snapshotId` (exact quote stored in the prediction) | `src/domain/risk/evaluate.js` |
+
+Design notes:
+- History: the most recent 1,000 finished league matches before `asOf` (about 2.5 seasons; the model uses at most 380 league and 38 team matches). `estimate()` repeats the leakage guard.
+- Quotes: pre-match snapshots of the last 24 h, found by `fixture_id` **or** through `odds_event_links`; freshness is decided by the risk engine (6 h scanner, 2 h on-demand).
+- `input_hash` covers model and risk config hashes, λ, the data cutoff and, per selection, status, reasons and the exact quote. A run whose result is identical to the last recorded one for the fixture records nothing; any change records 16 new rows. Rows are never updated.
+- The truncate assertion on `odds_snapshots` in `reference_and_odds.test.sql` now uses `cascade`: a plain `TRUNCATE` is refused earlier by the new foreign key from `predictions`, and the cascade form proves the append-only trigger still fires.
+
+Verification: 151/151 unit tests, lint clean; all migrations and both DB test files pass on a local PostgreSQL 16 (CI uses 17). Read-only check of the live database: in the next 7 days, every BUNDESLIGA, LALIGA, SERIEA and LIGUE1 fixture has linked odds; EPL has none yet (no EPL match within the 48 h odds horizon at the last sync). League history: 349–458 finished matches per league.
+
+Not yet done: migration 3 is **not applied** to Supabase (waits for merge approval); no end-to-end run against live data, since the service-role key is only available in GitHub Actions and on Render (first live run is the 5.2 scanner).

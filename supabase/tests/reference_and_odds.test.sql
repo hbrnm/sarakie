@@ -38,7 +38,7 @@ end $$;
 -- append-only odds snapshots and credit ledger
 select pg_temp.expect_error('update public.odds_snapshots set decimal_odds = 2.0', 'odds update', '42501');
 select pg_temp.expect_error('delete from public.odds_snapshots', 'odds delete', '42501');
-select pg_temp.expect_error('truncate public.odds_snapshots', 'odds truncate', '42501');
+select pg_temp.expect_error('truncate public.odds_snapshots cascade', 'odds truncate', '42501');
 select pg_temp.expect_error('update public.odds_credit_ledger set credits = 0', 'ledger update', '42501');
 select pg_temp.expect_error('delete from public.odds_credit_ledger', 'ledger delete', '42501');
 

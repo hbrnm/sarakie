@@ -1,6 +1,6 @@
 'use strict';
 
-const { formatForDisplay, DISPLAY_TIME_ZONE } = require('../time/format');
+const { formatForDisplay, formatKickoff } = require('../time/format');
 const { getCompetition } = require('../domain/competitions');
 
 // Bot messages are in Romanian (D-04). Plain text only: no parse_mode, nothing to escape.
@@ -89,15 +89,6 @@ function parseLeague(arg) {
   return LEAGUE_ALIASES[key] || null;
 }
 
-const kickoffFormatter = new Intl.DateTimeFormat('ro-RO', {
-  timeZone: DISPLAY_TIME_ZONE,
-  weekday: 'short',
-  day: '2-digit',
-  month: '2-digit',
-  hour: '2-digit',
-  minute: '2-digit',
-  hour12: false,
-});
 
 const MAX_MESSAGE = 3800; // Telegram limit is 4096 characters
 
@@ -119,7 +110,7 @@ function fixturesMessages(items, { days, competitionCode = null }) {
   for (const [code, list] of byComp) {
     const comp = getCompetition(code);
     const title = comp.modelApplicable ? comp.name : `${comp.name} (informativ, fără analiză de valoare)`;
-    const lines = list.map((it) => `• ${kickoffFormatter.format(new Date(it.kickoffUtc))} — ${it.home} – ${it.away}`);
+    const lines = list.map((it) => `• ${formatKickoff(new Date(it.kickoffUtc))} — ${it.home} – ${it.away}`);
     blocks.push([title, ...lines].join('\n'));
   }
   // Pack lines into messages below the Telegram limit; a long competition block continues
