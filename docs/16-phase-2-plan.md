@@ -23,7 +23,14 @@ Known open points:
 - The Odds API **double-chance outcome naming** is unverified (S-52). Unknown forms are dropped and counted.
 - The alias table is a starter list, to be extended from the smoke-test mapping report.
 
-## 2.2 — Persistence (needs a Supabase project)
+## 2.2 — Persistence
+
+Status 2026-10-15:
+- Supabase project `fvis` created by Claude through the Supabase connector (organization "Camara", free plan, `eu-central-1`, Postgres 17). The existing project "Camara" was not touched.
+- Migration `20261015000001_reference_and_odds` applied. Verified read-only on Supabase: 10 tables, RLS on all, no table readable by `anon`/`authenticated`, 4 append-only triggers, 7 competitions seeded. Security advisor: only the expected INFO "RLS enabled, no policy" (access is server-side only).
+- Behavioural assertions (`supabase/tests/`) run in CI on a clean Postgres 17. They are deliberately **not** run on Supabase, because they would leave undeletable rows in append-only tables.
+
+Remaining:
 
 - SQL migrations under `supabase/migrations/`: competitions, provider maps, teams + aliases, fixtures, bookmakers, `odds_snapshots` (append-only trigger), `provider_request_log`, `odds_credit_ledger`.
 - RLS enabled on every table with no anon policies.
