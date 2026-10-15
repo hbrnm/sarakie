@@ -1,12 +1,12 @@
 # Phase 2.3 — daily fixtures/results sync and odds capture (D-11).
 # Phase 5.2 — the scanner runs as the second step, on the odds captured by the sync (D-15).
 # GitHub cron is UTC and best effort (can be delayed or skipped under load).
-# 07:17 UTC = 10:17 Bucharest in summer time (EEST), 09:17 in winter time (EET).
+# 08:17 UTC = 10:17 Bucharest in winter time (EET, from 25 Oct 2026), 11:17 in summer time (EEST).
 name: daily-sync
 
 on:
   schedule:
-    - cron: '17 7 * * *'
+    - cron: '17 8 * * *'
   workflow_dispatch:
     inputs:
       scan_only:

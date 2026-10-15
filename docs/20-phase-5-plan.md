@@ -144,3 +144,7 @@ PO actions before the live test: add `ODDS_API_KEY` on Render (same value as the
 | Backup round-trip in CI (`db` job): NULL vs '', quotes, commas, newlines, `text[]`, `jsonb`, identity sequences | `test/db/backupRoundtrip.js`, `.github/workflows/ci.yml` |
 
 Verification: 185/185 tests, lint clean; migrations 1–4 and the DB assertions pass on local PostgreSQL 16; the backup round-trip passes locally (`RESTORE CHECK PASSED`). Live: CI run 38725484241 green (including the backup round-trip); migration 4 applied to Supabase (view `security_invoker`, no anon/authenticated access); the first settlement happens after the Friday 16.10 fixtures finish (daily run of 17.10); the first live backup on Sunday 18.10 or by a manual run.
+
+### Schedule change (2026-10-15, PO decision)
+
+`daily-sync` (sync → scan → settle) runs at **08:17 UTC**: 10:17 Bucharest in winter time (from 25 Oct 2026), 11:17 until then. `scan-watchdog` follows three hours later at 11:17 UTC. GitHub cron stays best effort.
