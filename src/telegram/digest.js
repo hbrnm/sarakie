@@ -35,10 +35,21 @@ function buildDigest({ scanDate, horizonHours, results, failed, usage = null, mo
     }
     const facts = buildFacts({ match: r.match, evaluation: r.evaluation, estimate: r.estimate });
     const evs = r.evaluation.selections.filter((s) => s.status === 'QUALIFIED' || s.status === 'WATCHLIST');
-    facts.highlights.forEach((h, i) => items[h.status].push({ facts, h, ev: evs[i].ev }));
+    const kickoffMs = r.fixture ? Date.parse(r.fixture.kickoffUtc) : Infinity;
+    facts.highlights.forEach((h, i) => items[h.status].push({ facts, h, ev: evs[i].ev, kickoffMs }));
   }
 
   const lines = [`FVIS — scanare zilnică ${scanDate}`, ''];
+
+  // Short summary first (PO request, 2026-10-15): the QUALIFIED selections in kickoff order.
+  // Same rows as the QUALIFIED section below, only reformatted; no new numbers.
+  lines.push('SELECȚIILE ZILEI (QUALIFIED)');
+  const picks = [...items.QUALIFIED].sort((a, b) => a.kickoffMs - b.kickoffMs || (a.facts.match < b.facts.match ? -1 : 1));
+  if (!picks.length) lines.push('Niciuna azi.');
+  for (const { facts, h } of picks.slice(0, MAX_ITEMS)) lines.push(`• ${facts.match} · ${h.selection} · cota ${h.bestOdds} · ${facts.kickoff}`);
+  if (picks.length > MAX_ITEMS) lines.push(`… și încă ${picks.length - MAX_ITEMS}`);
+  if (picks.length) lines.push('Doar pentru urmărire pe hârtie: modelul nu este încă validat (Faza 6).');
+  lines.push('', 'DETALII');
   lines.push(`Meciuri analizate: ${results.length} (următoarele ${horizonHours} h, ligile interne)`);
   if (failed) lines.push(`Meciuri cu eroare de procesare: ${failed}`);
   if (notAnalysable) {

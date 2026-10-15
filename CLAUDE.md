@@ -576,5 +576,6 @@ Dated record of Product Owner approvals. It updates §15 without rewriting it.
 | 2026-10-15 | Daily cron moved to 08:17 UTC (10:17 Bucharest in winter time; 11:17 until 25 Oct); watchdog to 11:17 UTC. |
 | 2026-10-15 | **D-20** approved and to be deployed: `/azi` (and `/azi maine`) lists every match of the day from stored data only — latest FVIS analysis for league matches, market-only view for UCL/UEL; FVIS gives no betting tips. |
 | 2026-10-15 | `/azi` verified live by the PO. **Phase 6a (cup cross-league feasibility study) authorized (D-21)**: measurement and documentation only — no production code, no paid services, no EV/QUALIFIED for UCL/UEL until validated. Phase 6 proper remains not authorized. |
+| 2026-10-15 | **D-22** approved: the morning digest opens with a short "SELECȚIILE ZILEI (QUALIFIED)" list (presentation only); merge of `feature/digest-daily-picks` into `main` approved. |
 
 Phase 6 (except the 6a feasibility study) and later phases remain **not authorized** until explicitly approved.

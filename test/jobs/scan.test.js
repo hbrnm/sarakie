@@ -35,6 +35,11 @@ test('scanner analyses upcoming fixtures, records predictions and sends one dige
   const text = sender.sent[0].text;
   assert.equal(sender.sent[1].text, text);
   assert.match(text, /ELIGIBILE PENTRU URMĂRIRE \(QUALIFIED\)/);
+  // Short summary first, then the details.
+  assert.match(text, /^FVIS — scanare zilnică .*\n\nSELECȚIILE ZILEI \(QUALIFIED\)\n• Home FC – Team T02 · Peste 2\.5 goluri · cota \d+\.\d\d · .*\d\d:\d\d\n/);
+  assert.match(text, /Doar pentru urmărire pe hârtie: modelul nu este încă validat/);
+  assert.ok(text.indexOf('SELECȚIILE ZILEI') < text.indexOf('DETALII'));
+  assert.ok(text.indexOf('DETALII') < text.indexOf('ELIGIBILE PENTRU URMĂRIRE'));
   assert.match(text, /Home FC – Team T02/);
   assert.match(text, /Peste 2\.5 goluri: cotă \d+\.\d\d \(B\d\) · model \d+\.\d% · piață \d+\.\d% · EV \+\d+\.\d%/);
   assert.match(text, /Credite cote luna aceasta: 20 din 500 \(rămase la furnizor: 437\)/);
@@ -116,6 +121,7 @@ test('UCL/UEL days: the digest has a market-only cup section; nothing is recorde
   const r = await scan({ store, sender, chatIds: [1], now: () => NOW });
   assert.equal(r.cups, 1);
   const text = sender.sent[0].text;
+  assert.match(text, /SELECȚIILE ZILEI \(QUALIFIED\)\n(Niciuna azi\.|• Home FC)/);
   assert.match(text, /CUPE EUROPENE — DOAR PIAȚA \(informativ\)/);
   assert.match(text, /UEFA Champions League · .* — Benfica – Celtic\n {2}piață: 1 \d+\.\d% · X \d+\.\d% · 2 \d+\.\d% \(1 case, cote de la \d\d:\d\d\)/);
   assert.equal(fake.table('predictions').filter((p) => p.fixture_id === 'ucl-1').length, 0);
