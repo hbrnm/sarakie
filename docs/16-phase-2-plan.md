@@ -90,6 +90,23 @@ Verified read-only on Supabase after the run:
 
 Estimated cost: ≤ 2 credits per competition with a match in the next 48 h, so ≤ 12 credits on a busy day, about 150–250 credits per month (to be measured). The on-demand cap (200) and reserve (50) are unchanged.
 
+### First run (manual, run 38706869752, 2026-10-15 08:36 UTC)
+
+| Competition | Fixtures saved (−3/+7 d) | Odds | Events | Linked to fixtures | Quotes | Credits |
+|---|---|---|---|---|---|---|
+| EPL | 11 | no match within 48 h | — | — | — | 0 |
+| LALIGA | 12 | captured | 21 | 11 | 1,617 | 2 |
+| SERIEA | 12 | captured | 20 | 10 | 1,682 | 2 |
+| BUNDESLIGA | 9 | captured | 18 | 9 | 1,419 | 2 |
+| LIGUE1 | 9 | captured | 18 | 9 | 1,385 | 2 |
+| UCL | 36 | no match within 48 h | — | — | — | 0 |
+| UEL | not covered (fixtures) | captured | 18 | 0 (odds-only) | 1,506 | 2 + 0 (events list) |
+
+- 10 credits for the run; 447 remaining for October. **The odds events list costs 0 credits (VERIFIED, ledger row with `x-requests-last = 0`).**
+- Unlinked snapshots are events beyond the 7-day fixture window or UEL. They are linked later through `odds_event_links` once the fixture enters the window. Snapshots are never updated, so later phases must resolve fixtures via `odds_event_links`, not only `odds_snapshots.fixture_id`.
+- 125 teams (UCL added non-domestic teams); 111 with short display names.
+- Monthly estimate at this rate: about 150–250 credits for the scanner, inside the 500 − 50 reserve − 200 on-demand cap. To be confirmed after two weeks of runs.
+
 ## 2.3 — original plan (Telegram data commands)
 
 - `/fixtures [league]`: upcoming fixtures, including UCL/UEL marked "informativ".
