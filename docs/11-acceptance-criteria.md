@@ -53,7 +53,7 @@ Each criterion must be demonstrated with evidence (test output, logs, screenshot
 - [x] `UPDATE`/`DELETE` on append-only tables fails (DB test `supabase/tests/predictions.test.sql`; local PostgreSQL 16).
 - [ ] Duplicate scheduler trigger does not create duplicate digests. *5.2: tested (`test/jobs/scan.test.js`); live confirmation pending.*
 - [x] Missed-run detection works (simulated in `test/jobs/scan.test.js`; workflow `scan-watchdog`).
-- [ ] Backup job produces a restorable export (restore tested once).
+- [ ] Backup job produces a restorable export (restore tested once). *5.4: export → restore → value checks run in CI (`test/db/backupRoundtrip.js`); the weekly `backup` workflow restores every live export; first live run pending.*
 
 ## Phase 6 — Validation
 - [ ] Chronological OOS evaluation with documented train/test cut-offs.

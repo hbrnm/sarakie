@@ -49,3 +49,14 @@ jobs:
         run: for f in $(ls supabase/migrations/*.sql | sort); do echo "== $f"; psql -v ON_ERROR_STOP=1 -q -f "$f"; done
       - name: Database assertions
         run: for f in supabase/tests/*.test.sql; do echo "== $f"; psql -v ON_ERROR_STOP=1 -q -t -f "$f"; done
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci --omit=dev
+      - name: Backup round-trip (export → restore → value checks)
+        run: |
+          psql -v ON_ERROR_STOP=1 -q -c "drop schema public cascade; create schema public;"
+          for f in $(ls supabase/migrations/*.sql | sort); do psql -v ON_ERROR_STOP=1 -q -f "$f"; done
+          mkdir -p rt && node test/db/backupRoundtrip.js rt > rt/restore.sql
+          psql -v ON_ERROR_STOP=1 -q -f rt/restore.sql

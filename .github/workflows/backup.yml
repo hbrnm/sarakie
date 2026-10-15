@@ -1,0 +1,61 @@
+# Phase 5.4 — weekly database backup (D-08): all tables as CSV in a private workflow
+# artifact (90-day retention; never committed to Git), followed by a restore test into a
+# throwaway PostgreSQL with the repository migrations. GitHub cron is UTC and best effort.
+name: backup
+
+on:
+  schedule:
+    - cron: '23 2 * * 0'   # Sunday night, when no FVIS job writes
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: daily-sync   # never overlaps a sync/scan run
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci --omit=dev
+      - name: Export
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/backup.js export backup-out
+      - name: Upload private artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fvis-backup-${{ github.run_id }}
+          path: backup-out
+          retention-days: 90
+          if-no-files-found: error
+      - name: Restore test
+        env:
+          PGHOST: localhost
+          PGUSER: postgres
+          PGPASSWORD: postgres
+        run: |
+          psql -v ON_ERROR_STOP=1 -c "create role anon nologin; create role authenticated nologin;"
+          for f in $(ls supabase/migrations/*.sql | sort); do psql -v ON_ERROR_STOP=1 -q -f "$f"; done
+          node scripts/backup.js restore-sql backup-out > restore.sql
+          psql -v ON_ERROR_STOP=1 -q -f restore.sql

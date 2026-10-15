@@ -71,5 +71,8 @@ If verification confirms that the free plan does not cover the current season (S
 ## 7. Backup and retention
 
 - Supabase free tier: automated backups are UNVERIFIED (S-23). Assume **none**.
-- Proposed Phase 5 task: weekly `pg_dump` (or CSV export of append-only tables) through GitHub Actions to a private storage target. The target must be approved by the PO. Git is **not** an acceptable backup target for data, given repo size and privacy.
+- **Implemented (Phase 5.4, D-08):** workflow `backup` (Sunday 02:23 UTC, plus manual runs) exports every table as CSV through the service role and stores it as a **private workflow artifact** `fvis-backup-<run id>` with 90-day retention (about 13 weekly copies). Git is **not** used for data, given repo size and privacy. The same run restores the export into a throwaway PostgreSQL with the repository migrations and checks every row count; a failed restore check fails the run (GitHub notifies the repository owner).
+- Artifact storage for private repositories on the free plan is limited (about 500 MB, UNVERIFIED for this account); one export is currently a few MB zipped.
+- **Restore procedure:** download the artifact (Actions → backup run → Artifacts), unzip into `backup-out/`, create an empty database (e.g. a new Supabase project), apply `supabase/migrations/*.sql` in order, then run `node scripts/backup.js restore-sql backup-out > restore.sql` and `psql -v ON_ERROR_STOP=1 -f restore.sql` against it. The script loads tables in foreign-key order, resets identity sequences and asserts all row counts in one transaction.
+- Consistency: tables are exported one after another; the run is scheduled when no FVIS job writes and shares the `daily-sync` concurrency group, so it never overlaps a sync or scan.
 - Retention: odds snapshots and predictions are kept indefinitely within storage limits (needed for Phase 6). Telegram audit log is kept for 180 days (PROVISIONAL).

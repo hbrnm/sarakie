@@ -297,7 +297,36 @@ function createAnalysisStore(db) {
     );
   }
 
+  /** Predictions of final fixtures without an outcome (view unsettled_predictions), oldest first. */
+  async function unsettledPredictions() {
+    const out = [];
+    for (let from = 0; ; from += PAGE) {
+      const rows = unwrap(
+        await db.from('unsettled_predictions').select('prediction_id, market_code, selection_code, line, decimal_odds, fixture_status, home_goals, away_goals').order('prediction_id', { ascending: true }).range(from, from + PAGE - 1),
+        'read unsettled predictions',
+      );
+      out.push(...rows.map((r) => ({
+        predictionId: r.prediction_id,
+        marketCode: r.market_code,
+        selectionCode: r.selection_code,
+        line: num(r.line),
+        decimalOdds: num(r.decimal_odds),
+        fixture: { status: r.fixture_status, homeGoals: r.home_goals, awayGoals: r.away_goals },
+      })));
+      if (rows.length < PAGE) return out;
+    }
+  }
+
+  /** Inserts outcomes; one already settled by a concurrent run is skipped (ON CONFLICT DO NOTHING). */
+  async function insertOutcomes(rows) {
+    for (let i = 0; i < rows.length; i += PAGE) {
+      unwrap(await db.from('prediction_outcomes').upsert(rows.slice(i, i + PAGE), { onConflict: 'prediction_id', ignoreDuplicates: true }), 'insert outcomes');
+    }
+  }
+
   return {
+    unsettledPredictions,
+    insertOutcomes,
     getDigest,
     insertDigest,
     successfulScans,

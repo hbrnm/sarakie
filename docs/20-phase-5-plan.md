@@ -132,3 +132,15 @@ Failure behaviour: credit cap reached, provider error or missing `ODDS_API_KEY` 
 Verification: 178/178 tests, lint clean. New tests: query parsing (including two-word team names), one fetch with all six markets, link creation, reuse within 2 h, refetch after 2 h, double tap, reversed order, single team, unknown match, missing key, credit cap, cup market view (no predictions, no credits), consensus maths, digest cup section, `/analyze` argument passing and message splitting.
 
 PO actions before the live test: add `ODDS_API_KEY` on Render (same value as the GitHub secret); `GEMINI_API_KEY` and `GEMINI_MODEL_ID` optional.
+
+## 9. Sub-phase 5.4 — implementation (2026-10-15)
+
+| Deliverable | File |
+|---|---|
+| Paper settlement rules (pure): 1X2, DC, DNB (draw = PUSH, 0), O/U .5 lines, BTTS; WIN = odds − 1, LOSS = −1; VOID for CANCELLED/AWARDED fixtures and for predictions without a priced quote; POSTPONED waits | `src/domain/settlement.js` |
+| Migration 4: view `unsettled_predictions` (final fixtures, no outcome yet; `security_invoker`, no API-role access) + DB assertions | `supabase/migrations/20261015000004_settlement.sql`, `supabase/tests/predictions.test.sql` |
+| Settlement job, step `Settle` in `daily-sync` after the scan (append-only outcomes, idempotent, concurrent duplicates ignored); `closing_odds_snapshot_id` stays null until Phase 6 | `src/jobs/settle.js`, `scripts/settle.js`, `.github/workflows/daily-sync.yml` |
+| Weekly backup (D-08): CSV export of all 17 tables + manifest → private artifact (90 days) → restore test into PostgreSQL 17 with row-count checks | `src/jobs/backup.js`, `scripts/backup.js`, `.github/workflows/backup.yml` |
+| Backup round-trip in CI (`db` job): NULL vs '', quotes, commas, newlines, `text[]`, `jsonb`, identity sequences | `test/db/backupRoundtrip.js`, `.github/workflows/ci.yml` |
+
+Verification: 185/185 tests, lint clean; migrations 1–4 and the DB assertions pass on local PostgreSQL 16; the backup round-trip passes locally (`RESTORE CHECK PASSED`). Live: migration 4 needs to be applied to Supabase; the first settlement happens after the Friday 16.10 fixtures finish (daily run of 17.10); the first live backup on Sunday 18.10 or by a manual run.

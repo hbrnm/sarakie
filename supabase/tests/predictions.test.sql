@@ -68,6 +68,19 @@ select pg_temp.expect_error($q$insert into public.prediction_outcomes (predictio
 select pg_temp.expect_error($q$insert into public.analysis_runs (trigger, as_of, risk_version, risk_config_hash) values ('scanner', now(), '1.0.0', repeat('b', 64))$q$, 'scanner run without scan_date', '23514');
 select pg_temp.expect_error($q$insert into public.analysis_runs (trigger, as_of, risk_version, risk_config_hash, status) values ('on_demand', now(), '1.0.0', repeat('b', 64), 'OK')$q$, 'finished run without finished_at', '23514');
 
+-- unsettled_predictions: only final fixtures without an outcome; not readable by API roles
+do $$ begin
+  if (select count(*) from public.unsettled_predictions) <> 0 then raise exception 'scheduled fixture must not be listed'; end if;
+end $$;
+update public.fixtures set status = 'FINISHED', home_goals = 1, away_goals = 1 where id = '00000000-0000-0000-0000-0000000000e1';
+do $$ begin
+  -- the 1X2 prediction already has an outcome; only the BTTS one is unsettled
+  if (select count(*) from public.unsettled_predictions) <> 1 then raise exception 'expected exactly one unsettled prediction'; end if;
+  if (select market_code from public.unsettled_predictions) <> 'BTTS' then raise exception 'wrong unsettled prediction'; end if;
+  if has_table_privilege('anon', 'public.unsettled_predictions', 'select') then raise exception 'anon can read unsettled_predictions'; end if;
+  if has_table_privilege('authenticated', 'public.unsettled_predictions', 'select') then raise exception 'authenticated can read unsettled_predictions'; end if;
+end $$;
+
 -- analysis runs stay mutable (status and counts are completed at the end of a run)
 update public.analysis_runs set status = 'OK', finished_at = now(), fixtures_analyzed = 1 where id = '00000000-0000-0000-0000-0000000000b1';
 
