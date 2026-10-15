@@ -90,6 +90,7 @@ function loadConfig(env = process.env) {
       allowedUserIds: c.TELEGRAM_ALLOWED_USER_IDS,
       webhookPath: '/telegram/webhook',
     }),
+    supabase: c.SUPABASE_URL && c.SUPABASE_SERVICE_ROLE_KEY ? Object.freeze({ url: c.SUPABASE_URL, serviceRoleKey: c.SUPABASE_SERVICE_ROLE_KEY }) : null,
     publicBaseUrl: (c.WEBHOOK_BASE_URL || c.RENDER_EXTERNAL_URL || '').replace(/\/+$/, '') || null,
     secretValues: SECRET_KEYS.map((k) => cleaned[k]).filter(Boolean),
   });

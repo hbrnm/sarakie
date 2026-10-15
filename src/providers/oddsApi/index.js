@@ -256,6 +256,19 @@ function createOddsApiAdapter({ apiKey, budget, baseUrl = DEFAULT_BASE_URL, http
       );
       return { ...normalizeAll(Array.isArray(body) ? body : [], competitionCode), credits };
     },
+    /** Upcoming events without odds (reported as free; the actual cost is still recorded). */
+    async listEvents({ competitionCode, purpose = 'scanner' }) {
+      const key = await sportKeyFor(competitionCode);
+      const { body, credits } = await paidGet(`/sports/${key}/events`, { dateFormat: 'iso' }, { purpose, estimatedCredits: 0 });
+      const events = [];
+      for (const raw of Array.isArray(body) ? body : []) {
+        const p = eventSchema.safeParse({ ...raw, bookmakers: [] });
+        if (!p.success) continue;
+        const e = p.data;
+        events.push({ providerEventId: e.id, competitionCode, kickoffUtc: new Date(e.commence_time).toISOString(), homeTeamName: e.home_team, awayTeamName: e.away_team });
+      }
+      return { events, credits };
+    },
     /** On-demand call: extra markets for one event (≈1 credit per market returned). */
     async getEventOdds({ competitionCode, providerEventId, markets = ['btts', 'draw_no_bet', 'double_chance', 'alternate_totals'], purpose = 'on_demand' }) {
       const key = await sportKeyFor(competitionCode);

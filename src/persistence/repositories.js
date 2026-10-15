@@ -201,6 +201,29 @@ function createRepositories(db, { now = () => new Date(), uuid = () => crypto.ra
     );
   }
 
+  async function upsertOddsEvents(sourceProvider, events) {
+    if (!events.length) return;
+    const t = now().toISOString();
+    const rows = [...new Map(events.map((e) => [e.providerEventId, e])).values()].map((e) => ({
+      source_provider: sourceProvider,
+      provider_event_id: e.providerEventId,
+      competition_code: e.competitionCode,
+      kickoff_utc: e.kickoffUtc,
+      home_team_name: e.homeTeamName,
+      away_team_name: e.awayTeamName,
+      last_seen_at: t,
+    }));
+    for (const part of chunks(rows)) {
+      unwrap(await db.from('odds_events').upsert(part, { onConflict: 'source_provider,provider_event_id' }), 'upsert odds events');
+    }
+  }
+
+  /** Keeps display names current: { id, name, shortName }[] keyed by canonical team id. */
+  async function updateTeamNames(entries) {
+    const rows = [...new Map(entries.filter((e) => e.id).map((e) => [e.id, e])).values()].map((e) => ({ id: e.id, name: e.name, short_name: e.shortName || null }));
+    for (const part of chunks(rows)) unwrap(await db.from('teams').upsert(part, { onConflict: 'id' }), 'update team names');
+  }
+
   /** Request log entries from the HTTP client's onRequest hook (path only, never query strings). */
   async function insertRequestLog(entries) {
     const rows = entries.map((e) => ({
@@ -225,6 +248,8 @@ function createRepositories(db, { now = () => new Date(), uuid = () => crypto.ra
     ensureBookmakers,
     insertOddsSnapshots,
     linkOddsEvents,
+    upsertOddsEvents,
+    updateTeamNames,
     insertRequestLog,
   };
 }

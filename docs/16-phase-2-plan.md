@@ -79,7 +79,18 @@ Verified read-only on Supabase after the run:
 - 31 provider requests logged, none containing a query string. Database size 20 MB of the 500 MB free limit.
 - Current-season samples are still small (43–78 matches per league), which is relevant for the model's sample-size gates (spec §6).
 
-## 2.3 — Telegram data commands
+## 2.3 — Daily sync and Telegram data commands (implemented, pending merge)
+
+| Component | File | Notes |
+|---|---|---|
+| Migration 2 | `supabase/migrations/20261015000002_odds_events.sql` | `odds_events` (teams + kickoff per odds event, needed for UEL), `teams.short_name` |
+| Daily sync job | `src/jobs/dailySync.js`, `scripts/daily-sync.js` | fixtures −3/+7 days for the 6 competitions football-data.org covers; featured odds only where a match is within 48 h; UEL via the odds events list; credit budget enforced from the Supabase ledger |
+| Workflow | `.github/workflows/daily-sync.yml` | cron `17 7 * * *` UTC = 10:17 Bucharest in summer time, 09:17 in winter time (from 25 Oct 2026); best effort; manual run possible |
+| Bot | `/fixtures [league]`, `/quota` | reads Supabase; UCL/UEL marked informational; messages split under the Telegram limit; graceful answer if the database is unavailable |
+
+Estimated cost: ≤ 2 credits per competition with a match in the next 48 h, so ≤ 12 credits on a busy day, about 150–250 credits per month (to be measured). The on-demand cap (200) and reserve (50) are unchanged.
+
+## 2.3 — original plan (Telegram data commands)
 
 - `/fixtures [league]`: upcoming fixtures, including UCL/UEL marked "informativ".
 - `/quota`: football-data.org usage and Odds API credits this month.

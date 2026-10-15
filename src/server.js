@@ -5,6 +5,10 @@ const { createLogger } = require('./logging/logger');
 const { createBot } = require('./telegram/bot');
 const { createHttpServer } = require('./http/server');
 const { version } = require('../package.json');
+const { createSupabase } = require('./persistence/supabase');
+const { createSupabaseCreditStore } = require('./persistence/repositories');
+const { createQueries } = require('./persistence/queries');
+const { createCreditBudget } = require('./providers/oddsApi/creditBudget');
 
 async function main() {
   let config;
@@ -23,11 +27,22 @@ async function main() {
   const startedAt = Date.now();
   const getStatus = () => ({ version, uptimeSeconds: (Date.now() - startedAt) / 1000, now: new Date() });
 
+  let data = null;
+  if (config.supabase) {
+    const db = createSupabase(config.supabase);
+    const budget = createCreditBudget({ store: createSupabaseCreditStore(db) });
+    const queries = createQueries(db);
+    data = { upcoming: (q) => queries.upcoming(q), quota: () => queries.quota({ budget }) };
+  } else {
+    logger.warn('data.unavailable', { reason: 'SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY not set' });
+  }
+
   const bot = createBot({
     token: config.telegram.botToken,
     allowedUserIds: config.telegram.allowedUserIds,
     logger,
     getStatus,
+    data,
   });
 
   const server = createHttpServer({

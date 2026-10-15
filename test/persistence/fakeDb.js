@@ -8,6 +8,7 @@
 const APPEND_ONLY = new Set(['odds_snapshots', 'odds_credit_ledger']);
 const IDENTITY = new Set(['bookmakers', 'odds_snapshots', 'provider_request_log', 'odds_credit_ledger']);
 const UUID_DEFAULT = new Set(['teams', 'fixtures']); // `default gen_random_uuid()` in the schema
+// Upsert merges provided columns into the existing row, like ON CONFLICT DO UPDATE.
 
 function createFakeDb() {
   const tables = new Map();
@@ -40,11 +41,20 @@ function createFakeDb() {
         state.filters.push((r) => r[col] === val);
         return builder;
       },
+      gte(col, val) {
+        state.filters.push((r) => r[col] >= val);
+        return builder;
+      },
+      lt(col, val) {
+        state.filters.push((r) => r[col] < val);
+        return builder;
+      },
       in(col, vals) {
         state.filters.push((r) => vals.includes(r[col]));
         return builder;
       },
-      order() {
+      order(col, { ascending = true } = {}) {
+        state.order = { col, ascending };
         return builder;
       },
       then(resolve, reject) {
@@ -60,7 +70,11 @@ function createFakeDb() {
 
   function execute(name, s) {
     const t = table(name);
-    if (s.op === 'select') return { data: t.filter((r) => s.filters.every((f) => f(r))).map((r) => ({ ...r })), error: null };
+    if (s.op === 'select') {
+      const rows = t.filter((r) => s.filters.every((f) => f(r))).map((r) => ({ ...r }));
+      if (s.order) rows.sort((a, b) => (a[s.order.col] < b[s.order.col] ? -1 : a[s.order.col] > b[s.order.col] ? 1 : 0) * (s.order.ascending ? 1 : -1));
+      return { data: rows, error: null };
+    }
     const out = [];
     for (const row of s.rows) {
       const r = { ...row };

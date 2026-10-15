@@ -2,6 +2,7 @@
 
 const { Telegraf } = require('telegraf');
 const messages = require('./messages');
+const { COMPETITIONS } = require('../domain/competitions');
 
 /**
  * Allowlist middleware. Must be registered first: unauthorized updates get no reply
@@ -45,9 +46,11 @@ function parseCommand(text, botUsername) {
  *   allowedUserIds: Set<number>,
  *   logger: { info: Function, warn: Function, error: Function },
  *   getStatus: () => { version: string, uptimeSeconds: number, now: Date },
+ *   data?: { upcoming: Function, quota: Function } | null,
+ *   now?: () => Date,
  * }} deps
  */
-function createBot({ token, allowedUserIds, logger, getStatus }) {
+function createBot({ token, allowedUserIds, logger, getStatus, data = null, now = () => new Date() }) {
   const bot = new Telegraf(token);
 
   bot.use(createAuthMiddleware(allowedUserIds, logger));
@@ -59,19 +62,49 @@ function createBot({ token, allowedUserIds, logger, getStatus }) {
     return next();
   });
 
+  const DAY = 86400000;
+
+  /** Each command returns one message or an array of messages. */
   const commands = {
     start: () => messages.startMessage(),
     help: () => messages.helpMessage(),
     health: () => messages.healthMessage(getStatus()),
+    fixtures: async (args) => {
+      if (!data) return messages.dataUnavailableMessage();
+      let code = null;
+      if (args[0]) {
+        code = messages.parseLeague(args[0]);
+        if (!code) return messages.unknownLeagueMessage(args[0]);
+      }
+      const days = code ? 7 : 3;
+      const from = now();
+      const items = await data.upcoming({
+        from,
+        to: new Date(from.getTime() + days * DAY),
+        competitionCodes: code ? [code] : COMPETITIONS.map((c) => c.code),
+      });
+      return messages.fixturesMessages(items, { days, competitionCode: code });
+    },
+    quota: async () => (data ? messages.quotaMessage(await data.quota()) : messages.dataUnavailableMessage()),
   };
 
   // Commands are recognized from the text itself, not only from Telegram's
   // bot_command entity, so "/health" sent as code or pasted text still works.
-  bot.on('message', (ctx) => {
+  bot.on('message', async (ctx) => {
     const text = typeof ctx.message.text === 'string' ? ctx.message.text : '';
     const name = parseCommand(text, ctx.botInfo && ctx.botInfo.username);
     const handler = name && Object.hasOwn(commands, name) ? commands[name] : null;
-    return ctx.reply(handler ? handler() : messages.unknownMessage());
+    if (!handler) return ctx.reply(messages.unknownMessage());
+    const args = text.trim().split(/\s+/).slice(1, 3).map((a) => a.slice(0, 32));
+    let out;
+    try {
+      out = await handler(args);
+    } catch (err) {
+      logger.error('telegram.command_failed', { command: name, error: err && err.message });
+      out = messages.dataUnavailableMessage();
+    }
+    for (const msg of Array.isArray(out) ? out : [out]) await ctx.reply(msg);
+    return undefined;
   });
 
   bot.catch((err, ctx) => {

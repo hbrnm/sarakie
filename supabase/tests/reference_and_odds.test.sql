@@ -72,4 +72,10 @@ begin
   end loop;
 end $$;
 
+-- odds_events: upsertable metadata, competition must exist
+insert into public.odds_events (source_provider, provider_event_id, competition_code, kickoff_utc, home_team_name, away_team_name)
+values ('the_odds_api', 'ev-uel-1', 'UEL', '2026-10-23T16:45:00Z', 'Roma', 'Ajax');
+update public.odds_events set kickoff_utc = '2026-10-23T19:00:00Z', last_seen_at = now() where provider_event_id = 'ev-uel-1';
+select pg_temp.expect_error($q$insert into public.odds_events (source_provider, provider_event_id, competition_code, kickoff_utc, home_team_name, away_team_name) values ('x','e','NOPE',now(),'a','b')$q$, 'odds_events unknown competition', '23503');
+
 select 'ALL DB ASSERTIONS PASSED' as result;
