@@ -29,11 +29,12 @@ Each criterion must be demonstrated with evidence (test output, logs, screenshot
 - [x] CI is green: lint, tests, `npm audit` (no high/critical findings). *(GitHub run 38689229255, 2026-10-15)*
 
 ## Phase 2 — Data integration
-- [ ] League IDs are discovered dynamically; nothing is hard-coded (code review + test).
-- [ ] Adapter unit tests run on recorded, sanitized responses.
-- [ ] All timestamps are persisted in UTC; display tests cover `Europe/Bucharest` across a DST change.
-- [ ] Odds normalized to canonical market codes; invalid odds are rejected (tested).
-- [ ] Quota guard blocks calls beyond budget (tested).
+- [x] League IDs are discovered dynamically; nothing is hard-coded (discovery by name/area and sport title; tested).
+- [x] Adapter unit tests run on recorded-shape, sanitized responses; live smoke test on real providers (runs 38703516262, 38706869752).
+- [x] All timestamps are persisted in UTC; display tests cover `Europe/Bucharest` across a DST change.
+- [x] Odds normalized to canonical market codes; invalid odds are rejected (tested; enforced again by DB checks).
+- [x] Quota guard blocks calls beyond budget (tested; Supabase ledger shared across runs).
+- [x] `/fixtures` and `/quota` verified by the Product Owner in Telegram (2026-10-15).
 
 ## Phase 3 — Quantitative engine
 - [ ] All tests in [04 §15](04-quantitative-model-spec.md) are implemented and passing.
