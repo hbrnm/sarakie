@@ -35,6 +35,16 @@ test('sender posts plain text, retries 5xx, gives up on 4xx, never leaks the tok
   await assert.rejects(failing.send(1, 'x'), (err) => !err.message.includes(TOKEN) && /REDACTED/.test(err.message));
 });
 
+test('sender trims the token and rejects a malformed one before any request', async () => {
+  const calls = [];
+  const sender = createTelegramSender({ token: `  ${TOKEN}\n`, fetchImpl: async (url) => { calls.push(url); return { ok: true, status: 200 }; } });
+  await sender.send(1, 'x');
+  assert.equal(calls[0], `https://api.telegram.org/bot${TOKEN}/sendMessage`);
+  assert.throws(() => createTelegramSender({ token: 'not-a-token' }), /does not look like a BotFather token/);
+  const unauthorized = createTelegramSender({ token: TOKEN, fetchImpl: async () => ({ ok: false, status: 401 }), sleep: async () => {} });
+  await assert.rejects(unauthorized.send(1, 'x'), /bot token rejected/);
+});
+
 test('scan date is the Europe/Bucharest calendar day', () => {
   assert.equal(bucharestDate(new Date('2026-10-15T21:30:00Z')), '2026-10-16'); // 00:30 EEST
   assert.equal(bucharestDate(new Date('2026-12-31T21:59:00Z')), '2026-12-31'); // 23:59 EET

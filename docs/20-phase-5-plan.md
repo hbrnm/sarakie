@@ -105,3 +105,9 @@ Idempotency: every run records an `analysis_runs` row and new predictions only w
 Gemini is not used by the scanner (template numbers only); it stays limited to `/analyze` (5.3).
 
 Verification: 164/164 tests, lint clean. Tests cover one digest per day across duplicated runs, a lost claim race, Telegram failure (`PARTIAL`, digest kept), empty horizon, a failing fixture, watchdog alert/no alert, message splitting, sender retry and token redaction, Bucharest scan date across midnight, `/scan` and `/health`.
+
+### 5.2 live verification (2026-10-15, run 38716520794, `scan_only`, 0 credits)
+
+- Scanner: 4 fixtures in the 48 h horizon (Friday matches), 4 analysed, 4 recorded → 64 predictions (4 QUALIFIED, 6 WATCHLIST, 14 NO_VALUE, 40 INSUFFICIENT_DATA, mostly `ODDS_NOT_FETCHED` per D-11); digest stored (2,412 chars); 1 model version registered.
+- Telegram send failed with **HTTP 401** (bot token rejected) → run `PARTIAL`, as designed. Cause is the GitHub secret `TELEGRAM_BOT_TOKEN`; Render's token works. Follow-up: the sender now trims the token, checks its format and names the cause on 401/403.
+- **Quantitative observation:** 3 of the 4 QUALIFIED selections involve promoted teams with only 6–8 current-season matches (Deportivo, Le Mans, Frosinone). This follows the approved spec (`nTeamMin = 5`, shrinkage `k = 8`, promoted prior disabled; docs/04 §8), but such estimates are the least reliable. Decision requested from the PO (D-18).

@@ -32,8 +32,10 @@ function splitMessage(text, max = MAX_MESSAGE) {
  *
  * @param {{ token: string, fetchImpl?: typeof fetch, sleep?: (ms: number) => Promise<void>, attempts?: number }} options
  */
-function createTelegramSender({ token, fetchImpl = fetch, sleep = (ms) => new Promise((r) => setTimeout(r, ms)), attempts = 3 }) {
-  if (!token) throw new Error('TELEGRAM_BOT_TOKEN is required');
+function createTelegramSender({ token: rawToken, fetchImpl = fetch, sleep = (ms) => new Promise((r) => setTimeout(r, ms)), attempts = 3 }) {
+  // Secrets pasted with a trailing newline or spaces are a common cause of HTTP 401/404.
+  const token = String(rawToken ?? '').trim();
+  if (!/^\d+:[A-Za-z0-9_-]{30,}$/.test(token)) throw new Error('TELEGRAM_BOT_TOKEN does not look like a BotFather token (expected <digits>:<30+ characters>)');
   const url = `https://api.telegram.org/bot${token}/sendMessage`;
   const redact = (msg) => String(msg).split(token).join('[REDACTED]');
 
@@ -48,7 +50,9 @@ function createTelegramSender({ token, fetchImpl = fetch, sleep = (ms) => new Pr
           signal: AbortSignal.timeout(10000),
         });
         if (res.ok) return;
-        lastError = new Error(`Telegram sendMessage failed with HTTP ${res.status}`);
+        lastError = new Error(
+          `Telegram sendMessage failed with HTTP ${res.status}${res.status === 401 ? ' (bot token rejected: check the TELEGRAM_BOT_TOKEN secret)' : res.status === 403 ? ' (user has not started the bot or blocked it)' : ''}`,
+        );
         if (res.status < 500 && res.status !== 429) break;
       } catch (err) {
         lastError = new Error(`Telegram sendMessage failed: ${redact(err && err.message)}`);
