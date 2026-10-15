@@ -18,9 +18,10 @@ const LINK_TOLERANCE_MS = 36 * 3600 * 1000; // CSV dates are UK-local; kickoffs 
  *   repo: ReturnType<typeof import('../persistence/repositories').createRepositories>,
  *   seasons?: number[],
  *   competitionCodes?: string[],
+ *   currentSeasonOnly?: boolean,   daily closing-odds import (Phase 6d): only the current season
  * }} deps
  */
-async function backfillHistory({ fd, uk, repo, seasons, competitionCodes }) {
+async function backfillHistory({ fd, uk, repo, seasons, competitionCodes, currentSeasonOnly = false }) {
   const discovered = await fd.listCompetitions();
   await repo.upsertProviderCompetitions(discovered);
   const codes = competitionCodes || COMPETITIONS.filter((c) => c.type === 'domestic').map((c) => c.code);
@@ -32,7 +33,7 @@ async function backfillHistory({ fd, uk, repo, seasons, competitionCodes }) {
       report.push({ code, error: 'NO_PROVIDER_COVERAGE' });
       continue;
     }
-    const seasonList = seasons || [comp.currentSeason - 1, comp.currentSeason];
+    const seasonList = seasons || (currentSeasonOnly ? [comp.currentSeason] : [comp.currentSeason - 1, comp.currentSeason]);
     for (const season of seasonList) {
       const entry = { code, season };
       report.push(entry);

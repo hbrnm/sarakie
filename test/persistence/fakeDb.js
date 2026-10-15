@@ -5,8 +5,8 @@
  * src/persistence: from().select/insert/upsert + eq/in/order, awaited as { data, error }.
  * Append-only tables reject updates the same way the real triggers do.
  */
-const APPEND_ONLY = new Set(['odds_snapshots', 'odds_credit_ledger', 'model_versions', 'predictions', 'prediction_outcomes', 'explanations', 'scan_digests']);
-const IDENTITY = new Set(['bookmakers', 'odds_snapshots', 'provider_request_log', 'odds_credit_ledger', 'model_versions', 'predictions', 'explanations']);
+const APPEND_ONLY = new Set(['odds_snapshots', 'odds_credit_ledger', 'model_versions', 'predictions', 'prediction_outcomes', 'explanations', 'scan_digests', 'line_candidates', 'line_candidate_outcomes']);
+const IDENTITY = new Set(['bookmakers', 'odds_snapshots', 'provider_request_log', 'odds_credit_ledger', 'model_versions', 'predictions', 'explanations', 'line_candidates']);
 const UUID_DEFAULT = new Set(['teams', 'fixtures', 'analysis_runs']); // `default gen_random_uuid()` in the schema
 // Unique keys enforced on insert (subset used by tests).
 const UNIQUE = { scan_digests: ['scan_date'] };

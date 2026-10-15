@@ -65,6 +65,9 @@ test('/analyze fetches every market once (D-16), analyses on demand and records 
   assert.equal(fake.table('odds_event_links')[0].fixture_id, FIXTURE_ID);
   assert.match(text, /Premier League: Home FC – Team T02/);
   assert.match(text, /Cote: cote descărcate acum \(6 credite\)\. Credite la cerere luna aceasta: 6 din 200\./);
+  // D-24: the same line-shopping function as the scanner; shown only, not recorded.
+  assert.match(text, /CĂUTAREA CELUI MAI BUN PREȚ \(1X2, Faza 6d\)\nFără cote Pinnacle complete și recente/);
+  assert.equal(fake.table('line_candidates').length, 0);
   const preds = fake.table('predictions');
   assert.equal(preds.length, 16);
   assert.ok(preds.every((p) => p.mode === 'on_demand'));

@@ -24,6 +24,10 @@ Phase 0 — Foundation and Architecture. Governance: [`../CLAUDE.md`](../CLAUDE.
 | 17 | [Phase 3 engine](17-phase-3-engine.md) | Quantitative engine, tests, preliminary real-data check |
 | 18 | [Phase 4 risk and explanations](18-phase-4-risk-and-explanations.md) | Status classification, Gemini boundary, validation |
 | 19 | [Session handoff](19-session-handoff.md) | State and next steps for the Phase 5 session |
+| 20 | [Phase 5 plan](20-phase-5-plan.md) | Scanner, predictions, /analyze, settlement |
+| 21 | [Phase 6b backtest results](21-phase-6b-backtest-results.md) | Model vs market backtest, line-shopping backtest |
+| 22 | [Phase 6c line-shopping feasibility](22-phase-6c-line-shopping-feasibility.md) | Live feasibility from stored odds |
+| 23 | [Phase 6d plan and implementation](23-phase-6d-line-shopping-paper-plan.md) | Line-shopping paper tracker (D-24) |
 
 ## Conventions used in all documents
 

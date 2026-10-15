@@ -351,7 +351,144 @@ function createAnalysisStore(db) {
     }
   }
 
+  // ---------------------------------------------------------------- line shopping (Phase 6d)
+
+  /**
+   * Inserts line candidates; rows for odds already recorded (same fixture, selection, scope
+   * and snapshots) are skipped (ON CONFLICT DO NOTHING).
+   * @returns {Promise<number>} rows inserted
+   */
+  async function insertLineCandidates(rows) {
+    let inserted = 0;
+    for (let i = 0; i < rows.length; i += PAGE) {
+      const out = unwrap(
+        await db
+          .from('line_candidates')
+          .upsert(rows.slice(i, i + PAGE), { onConflict: 'fixture_id,selection_code,scope,pin_snapshot_id,price_snapshot_id', ignoreDuplicates: true })
+          .select('id'),
+        'insert line candidates',
+      );
+      inserted += (out || []).length;
+    }
+    return inserted;
+  }
+
+  /** Priced candidates of final fixtures without an outcome (view unsettled_line_candidates). */
+  async function unsettledLineCandidates() {
+    const out = [];
+    for (let from = 0; ; from += PAGE) {
+      const rows = unwrap(
+        await db
+          .from('unsettled_line_candidates')
+          .select('candidate_id, fixture_id, selection_code, price, fixture_status, home_goals, away_goals, kickoff_utc')
+          .order('candidate_id', { ascending: true })
+          .range(from, from + PAGE - 1),
+        'read unsettled line candidates',
+      );
+      out.push(...rows.map((r) => ({
+        candidateId: r.candidate_id,
+        fixtureId: r.fixture_id,
+        selectionCode: r.selection_code,
+        price: num(r.price),
+        fixture: { status: r.fixture_status, homeGoals: r.home_goals, awayGoals: r.away_goals, kickoffUtc: new Date(r.kickoff_utc).toISOString() },
+      })));
+      if (rows.length < PAGE) return out;
+    }
+  }
+
+  /**
+   * Pinnacle closing 1X2 odds (football-data.co.uk) of the given fixtures.
+   * @returns {Promise<Map<string, { HOME: number, DRAW: number, AWAY: number, snapshotIds: object }>>} complete sets only
+   */
+  async function pinnacleClosing(fixtureIds) {
+    const out = new Map();
+    const books = unwrap(
+      await db.from('bookmakers').select('id').eq('source_provider', 'football_data_co_uk').eq('provider_bookmaker_key', 'pinnacle'),
+      'read closing bookmaker',
+    );
+    if (!books.length || !fixtureIds.length) return out;
+    const ids = [...new Set(fixtureIds)];
+    for (let i = 0; i < ids.length; i += 100) {
+      const rows = unwrap(
+        await db
+          .from('odds_snapshots')
+          .select('id, fixture_id, selection_code, decimal_odds')
+          .eq('kind', 'closing')
+          .eq('market_code', '1X2')
+          .eq('bookmaker_id', books[0].id)
+          .in('fixture_id', ids.slice(i, i + 100))
+          .order('id', { ascending: true }),
+        'read closing odds',
+      );
+      const sets = new Map();
+      for (const r of rows) {
+        if (!sets.has(r.fixture_id)) sets.set(r.fixture_id, { snapshotIds: {} });
+        const s = sets.get(r.fixture_id);
+        s[r.selection_code] = num(r.decimal_odds);
+        s.snapshotIds[r.selection_code] = r.id;
+      }
+      for (const [id, s] of sets) if (s.HOME && s.DRAW && s.AWAY) out.set(id, s);
+    }
+    return out;
+  }
+
+  /** Inserts line outcomes; one already settled by a concurrent run is skipped. */
+  async function insertLineOutcomes(rows) {
+    for (let i = 0; i < rows.length; i += PAGE) {
+      unwrap(await db.from('line_candidate_outcomes').upsert(rows.slice(i, i + PAGE), { onConflict: 'candidate_id', ignoreDuplicates: true }), 'insert line outcomes');
+    }
+  }
+
+  /**
+   * Every LINE_VALUE candidate with its outcome (or null), for the /clv report.
+   * @returns {Promise<object[]>}
+   */
+  async function lineValueCandidates() {
+    const cands = [];
+    for (let from = 0; ; from += PAGE) {
+      const rows = unwrap(
+        await db
+          .from('line_candidates')
+          .select('id, fixture_id, scope, selection_code, bookmaker_key, price, edge, kickoff_utc, created_at')
+          .eq('status', 'LINE_VALUE')
+          .order('id', { ascending: true })
+          .range(from, from + PAGE - 1),
+        'read line candidates',
+      );
+      cands.push(...rows);
+      if (rows.length < PAGE) break;
+    }
+    const outcomes = new Map();
+    for (let i = 0; i < cands.length; i += 100) {
+      const rows = unwrap(
+        await db.from('line_candidate_outcomes').select('candidate_id, result, clv, close_ev, profit_per_unit').in('candidate_id', cands.slice(i, i + 100).map((c) => c.id)),
+        'read line outcomes',
+      );
+      for (const r of rows) outcomes.set(r.candidate_id, r);
+    }
+    return cands.map((c) => {
+      const o = outcomes.get(c.id);
+      return {
+        id: c.id,
+        fixtureId: c.fixture_id,
+        scope: c.scope,
+        selectionCode: c.selection_code,
+        bookmakerKey: c.bookmaker_key,
+        price: num(c.price),
+        edge: num(c.edge),
+        kickoffUtc: new Date(c.kickoff_utc).toISOString(),
+        createdAt: new Date(c.created_at).toISOString(),
+        outcome: o ? { result: o.result, clv: num(o.clv), closeEv: num(o.close_ev), profit: num(o.profit_per_unit) } : null,
+      };
+    });
+  }
+
   return {
+    insertLineCandidates,
+    unsettledLineCandidates,
+    pinnacleClosing,
+    insertLineOutcomes,
+    lineValueCandidates,
     latestPredictions,
     unsettledPredictions,
     insertOutcomes,

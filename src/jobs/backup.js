@@ -28,6 +28,8 @@ const TABLES = Object.freeze([
   { name: 'prediction_outcomes', order: ['prediction_id'] },
   { name: 'explanations', order: ['id'], identity: true },
   { name: 'scan_digests', order: ['scan_date'] },
+  { name: 'line_candidates', order: ['id'], identity: true },
+  { name: 'line_candidate_outcomes', order: ['candidate_id'] },
 ]);
 
 const quote = (s) => `"${String(s).replace(/"/g, '""')}"`;

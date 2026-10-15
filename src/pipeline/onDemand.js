@@ -6,6 +6,9 @@ const { MODEL_FAMILY, MODEL_VERSION, defaultConfig, configHash } = require('../d
 const { RISK_VERSION, defaultRiskConfig, riskConfigHash } = require('../domain/risk/config');
 const { marketConsensus } = require('../domain/odds/consensus');
 const { analyzeFixture, ALL_MARKETS } = require('./analyzeFixture');
+const { evaluateLineShopping } = require('../domain/lineShopping');
+const { defaultLineConfig } = require('../domain/lineShopping/config');
+const { lineSectionLines } = require('../telegram/lineView');
 const { recordAnalysis } = require('./record');
 const { marketViewMessage } = require('../telegram/marketView');
 const { formatKickoff } = require('../time/format');
@@ -154,9 +157,13 @@ function createOnDemandAnalyzer({ store, repo = null, odds = null, budget = null
       await store.finishRun(runId, { status: 'OK', finishedAt: now(), counts: { considered: 1, analyzed: 1, recorded: rec.recorded ? 1 : 0, credits } });
       let usage = null;
       if (budget) usage = await budget.usage().catch(() => null);
+      // D-24: line-shopping view of the same odds (shown only; the paper test records scanner rows).
+      const lineConfig = { ...defaultLineConfig(), maxOddsAgeMinutes: defaultRiskConfig().maxOddsAgeOnDemandMinutes };
+      const quotes = await store.loadQuotes({ fixtureId: fixture.id, since: new Date(t.getTime() - lineConfig.maxOddsAgeMinutes * 60000) });
+      const line = evaluateLineShopping({ quotes, kickoffUtc: fixture.kickoffUtc, now: t, config: lineConfig });
       const footer = [`Cote: ${note}.`];
       if (usage) footer.push(`Credite la cerere luna aceasta: ${usage.on_demand} din ${usage.onDemandMonthlyCap}.`);
-      return `${result.explanation.text}\n\n${footer.join(' ')}`;
+      return `${result.explanation.text}\n\n${lineSectionLines(line).join('\n')}\n\n${footer.join(' ')}`;
     } catch (err) {
       await store.finishRun(runId, { status: 'FAILED', finishedAt: now(), counts: { considered: 1, credits }, errorSummary: `${err.code || 'ERROR'}: ${err.message}` }).catch(() => {});
       throw err;

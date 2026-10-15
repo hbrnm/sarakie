@@ -35,6 +35,7 @@ async function main() {
     '',
     `Scan date (Europe/Bucharest): ${report.scanDate}; status ${report.status}`,
     `Fixtures: considered ${report.considered}, analysed ${report.analyzed}, recorded ${report.recorded}, failed ${report.failed}`,
+    `Line shopping (D-24): ${report.line && !report.line.error ? `evaluated ${report.line.evaluated}, rows inserted ${report.line.inserted}, failed ${report.line.failed}` : `ERROR ${report.line && report.line.error}`}`,
     `Digest: ${report.digest}; sent to ${report.sent} chat(s), send errors ${report.sendErrors}`,
   ];
   console.log(lines.join('\n'));
