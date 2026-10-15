@@ -554,5 +554,6 @@ Dated record of Product Owner approvals. It updates §15 without rewriting it.
 | 2026-10-15 | Merge of `feature/phase-1-skeleton` into `main` approved; D-13 (UCL/UEL two-step approach) approved. |
 | 2026-10-15 | Phase 1 deployed on Render by the Product Owner; `/start` and `/health` verified in Telegram. Command-parsing fix approved for merge. |
 | 2026-10-15 | **Phase 2 (Football data integration) authorized.** Requires a free Supabase project created by the Product Owner. |
+| 2026-10-15 | Merge of `feature/phase-2-data` (2.1) into `main` approved; Supabase project to be created by Claude through the Supabase connector (option B). |
 
 Phase 3 and all later phases remain **not authorized** until explicitly approved.
