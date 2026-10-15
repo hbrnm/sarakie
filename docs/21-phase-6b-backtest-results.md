@@ -48,7 +48,7 @@ The model's claimed EV (about +15%) is an artefact of model error: the real edge
 - "Calibrated but no CLV → keep as a research tool; tighten thresholds": **this is the observed case**, and stronger: CLV and close-EV are negative. Tightening the EV threshold does not fix it, because the large-EV selections are where the model disagrees most with a market that is more accurate than the model.
 - **Current `QUALIFIED` selections are not evidence of value.** Historically, the same rule lost about 4–7% per unit.
 
-## 4. Limitations
+## 4. Limitations (model comparison)
 
 - One market reference (Pinnacle). The live system prices against The Odds API's EU bookmakers, whose de-vigged consensus may be less sharp than Pinnacle. This is UNVERIFIED and does not change the model-vs-market gap.
 - Compared test sample 2,559: Pinnacle odds are missing for part of 2025/26 (cause UNVERIFIED). Bundesliga test n = 434.
@@ -56,6 +56,34 @@ The model's claimed EV (about +15%) is an artefact of model error: the real edge
 - No injuries, line-ups, xG or schedule information in any model.
 - D-18 (the < 10 matches cap) and odds-freshness gates are not simulated.
 
-## 5. Open decision
+## 6. Line shopping without a model (run 38748288174, commit `1e77ee5`)
 
-See the PO handoff of 2026-10-15: what FVIS reports as `QUALIFIED` until a model with demonstrated closing-line value exists.
+Probability = de-vigged pre-match market (Pinnacle, or the market average); price = best pre-match price across books (football-data.co.uk `Max`); a selection is taken when p × price − 1 ≥ edge, price 1.3–6, on 1X2 and O/U 2.5. CLV is against the best closing price; close-EV against the de-vigged Pinnacle close.
+
+| Source | Edge | Set | Bets | ROI [95% CI] | mean CLV | beat close | close-EV [95% CI] |
+|---|---|---|---|---|---|---|---|
+| Pinnacle | 2% | tuning | 2,943 | +0.3% [−5.1%, +6.4%] | +1.2% | 60.2% | **+3.4% [+3.1%, +3.7%]** |
+| Pinnacle | 2% | test | 600 | +2.7% [−10.2%, +16.0%] | +3.3% | 70.3% | **+4.0% [+3.2%, +4.8%]** |
+| Pinnacle | 5% | tuning | 477 | −2.4% [−17.4%, +14.0%] | +1.9% | 62.7% | **+6.4% [+5.4%, +7.3%]** |
+| Pinnacle | 5% | test | 109 | +3.4% [−29.1%, +35.5%] | +5.3% | 68.8% | **+7.6% [+4.8%, +11.5%]** |
+| Market average | 2% | tuning | 2,640 | −2.3% [−8.9%, +4.5%] | −0.4% | 49.3% | +2.0% [+1.7%, +2.4%] |
+| Market average | 2% | test | 494 | −12.6% [−28.1%, +3.4%] | +1.7% | 60.5% | +2.1% [+1.1%, +3.2%] |
+| Market average | 5% | tuning | 304 | +11.0% [−9.8%, +34.3%] | +1.1% | 53.3% | +4.3% [+3.0%, +5.6%] |
+| Market average | 5% | test | 40 | +25.4% [−29.8%, +86.3%] | +9.6% | 67.5% | +10.3% [+3.3%, +21.0%] |
+
+Interpretation:
+
+- Using the **sharp market as the probability** and taking only prices above it gives a **positive closing-line edge**, stable between tuning and test (close-EV +3–4% at 2%, +6–8% at 5%; CIs exclude zero). This is the opposite of the model-based selections (−3.7%).
+- Realised ROI is positive but not statistically distinguishable from zero: the samples are too small for profit to show through the variance (about 350 selections per season at 2%, about 65 at 5%).
+- The market average is a weaker probability source than Pinnacle (smaller and less stable edge).
+
+Limitations specific to line shopping (material):
+
+- `Max` is the best price across many bookmakers at one collection time; some of them are not available to the user, and the price may be gone when placed. Live availability is UNVERIFIED.
+- Soft bookmakers that are repeatedly beaten restrict or close accounts. This is an operational limit, not modelled.
+- The live odds source (The Odds API, EU region) must provide a sharp reference (e.g. Pinnacle) and enough bookmakers: UNVERIFIED for the current plan.
+- FVIS remains decision support: no automated betting or staking (CLAUDE.md §7).
+
+## 7. Open decision
+
+`QUALIFIED` is suspended (D-23). Open: whether FVIS should report market-based line-shopping candidates (sharp de-vigged probability vs best available price) instead of model-based selections. This changes the approved principle that the quantitative model is the source of probabilities (CLAUDE.md §4.1) and needs an explicit PO decision and a live feasibility check of the odds source.
