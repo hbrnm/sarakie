@@ -557,5 +557,6 @@ Dated record of Product Owner approvals. It updates §15 without rewriting it.
 | 2026-10-15 | Merge of `feature/phase-2-data` (2.1) into `main` approved; Supabase project to be created by Claude through the Supabase connector (option B). |
 | 2026-10-15 | Supabase project `fvis` created in organization "atlasculinar" after connector relink (PO request). Merge of `feature/phase-2-persistence` (schema 2.2) into `main` approved. |
 | 2026-10-15 | Phase 1 complete: cold-start reply measured by PO at about 5 s. Merge of `feature/phase-2-persistence-code` into `main` approved. |
+| 2026-10-15 | Phase 2.2 results merged; **Phase 2.3** (daily odds capture + results sync, `/fixtures`, `/quota`) authorized. Daily run at about 10:17 Bucharest time. |
 
 Phase 3 and all later phases remain **not authorized** until explicitly approved.
