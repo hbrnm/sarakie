@@ -70,7 +70,7 @@ async function get(endpoint, params = {}) {
     res = await fetch(url, { headers: { 'x-apisports-key': KEY } });
   } catch (err) {
     requestLog.push({ endpoint, params, error: redact(err.message) });
-    throw new Error(`network error on ${endpoint}: ${redact(err.message)}`);
+    throw new Error(`network error on ${endpoint}: ${redact(err.message)}`, { cause: err });
   }
   const body = await res.json().catch(() => null);
   const errors = body && body.errors && Object.keys(body.errors).length ? body.errors : null;

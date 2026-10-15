@@ -20,12 +20,12 @@ Each criterion must be demonstrated with evidence (test output, logs, screenshot
 - [ ] Go / no-go recommendation for API-Football free plan.
 
 ## Phase 1 — Telegram and cloud skeleton
-- [ ] The app refuses to start with missing or invalid env vars (tested).
-- [ ] A non-allowlisted user ID gets no response; the event is logged (tested).
-- [ ] A webhook request without the correct secret header gets `401` (tested).
-- [ ] `/health` reports status without exposing secrets.
-- [ ] Deployed on Render free. Cold-start reply time is measured and reported.
-- [ ] CI is green: lint, tests, `npm audit` (no high/critical findings).
+- [x] The app refuses to start with missing or invalid env vars (tested; smoke-tested: exit 1, names only).
+- [x] A non-allowlisted user ID gets no response; the event is logged (tested).
+- [x] A webhook request without the correct secret header gets `401` (tested + smoke test).
+- [x] `/health` reports status without exposing secrets (tested, HTTP and Telegram).
+- [ ] Deployed on Render free. Cold-start reply time is measured and reported. *(Product Owner, see [15](15-phase-1-runbook.md))*
+- [ ] CI is green: lint, tests, `npm audit` (no high/critical findings). *(locally green; first GitHub run pending)*
 
 ## Phase 2 — Data integration
 - [ ] League IDs are discovered dynamically; nothing is hard-coded (code review + test).

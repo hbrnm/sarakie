@@ -19,6 +19,7 @@ Phase 0 — Foundation and Architecture. Governance: [`../CLAUDE.md`](../CLAUDE.
 | 12 | [Validation plan](12-validation-plan.md) | Model evaluation methodology |
 | 13 | [Open decisions](13-open-decisions.md) | Decisions awaiting the Product Owner |
 | 14 | [Data source feasibility results](14-data-source-feasibility-results.md) | Phase 2a/2b measured results and odds credit budget |
+| 15 | [Phase 1 runbook](15-phase-1-runbook.md) | Bot creation and Render deployment steps |
 
 ## Conventions used in all documents
 

@@ -304,7 +304,7 @@ async function probeFootballDataCoUk(now) {
       const r = await c.get(`/mmz4281/${sc}/${L.fdcoukDiv}.csv`, {}, { raw: true });
       const entry = { code: L.code, season: sc, http: r.status };
       if (r.status === 200 && typeof r.body === 'string') {
-        const lines = r.body.replace(/^﻿/, '').split(/\r?\n/).filter((l) => l.trim() && l.replace(/,/g, '').trim());
+        const lines = r.body.replace(/^\uFEFF/, '').split(/\r?\n/).filter((l) => l.trim() && l.replace(/,/g, '').trim());
         const header = (lines[0] || '').split(',');
         const rows = lines.slice(1).map((l) => l.split(','));
         const idx = (col) => header.indexOf(col);

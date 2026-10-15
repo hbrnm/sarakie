@@ -31,11 +31,14 @@ A **modular monolith**: one Node.js (CommonJS) codebase, one deployable web serv
 
 Under option A, `SCHEDULER_TRIGGER_SECRET` is only needed if the optional `/internal/scan` endpoint is kept as a manual fallback.
 
-## 3. Module layout (proposed for Phase 1+; not created in Phase 0)
+## 3. Module layout (✓ = implemented)
 
 ```
 src/
-  config/          env loading + schema validation (fail fast, never log values)
+  config/          env loading + schema validation (fail fast, never log values)   [Phase 1 ✓]
+  logging/         JSON logger with secret redaction                               [Phase 1 ✓]
+  time/            Europe/Bucharest display formatting                             [Phase 1 ✓]
+  http/            node:http server: /health, Telegram webhook (secret, size, dedupe) [Phase 1 ✓]
   providers/
     index.js       provider interface (contract below)
     apiFootball/   adapter: HTTP client, quota guard, response → domain mapping
@@ -49,9 +52,9 @@ src/
     analyzeFixture.js   the single analysis pipeline used by both modes
   persistence/     Supabase repositories (append-only writes for snapshots/predictions)
   explain/         Gemini client, prompt builder, output validator, template fallback
-  telegram/        Telegraf bot, allowlist middleware, command handlers, formatters
+  telegram/        Telegraf bot, allowlist middleware, command handlers, formatters [Phase 1 ✓]
   jobs/scan.js     scanner entry point
-  server.js        web entry point
+  server.js        web entry point                                                [Phase 1 ✓]
 test/              unit + property tests; fixtures recorded from provider (sanitized)
 ```
 
