@@ -574,5 +574,6 @@ Dated record of Product Owner approvals. It updates §15 without rewriting it.
 | 2026-10-15 | `/analyze` verified live by the PO (Frankfurt – Köln: 16 predictions, 6 credits; Gemini fell back to the template, `GEMINI_ERROR`). **Sub-phase 5.4 (settlement + backup) started.** |
 | 2026-10-15 | Phase 5.4 merge into `main` approved; migration 4 (`unsettled_predictions` view) applied to Supabase; manual `backup` run approved. |
 | 2026-10-15 | Daily cron moved to 08:17 UTC (10:17 Bucharest in winter time; 11:17 until 25 Oct); watchdog to 11:17 UTC. |
+| 2026-10-15 | **D-20** approved and to be deployed: `/azi` (and `/azi maine`) lists every match of the day from stored data only — latest FVIS analysis for league matches, market-only view for UCL/UEL; FVIS gives no betting tips. |
 
 Phase 6 and later phases remain **not authorized** until explicitly approved.

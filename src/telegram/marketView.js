@@ -1,7 +1,7 @@
 'use strict';
 
 const { getCompetition } = require('../domain/competitions');
-const { formatKickoff } = require('../time/format');
+const { formatKickoff, formatTime } = require('../time/format');
 
 // D-19: UCL/UEL are shown with market-implied probabilities only. The model does not apply
 // across leagues (D-13), so there is no model probability, EV or status here.
@@ -17,7 +17,8 @@ function marketViewLines({ event, consensus }) {
   if (x) parts.push(`1 ${pct(x.HOME)} · X ${pct(x.DRAW)} · 2 ${pct(x.AWAY)}`);
   if (consensus.OU) parts.push(`Peste ${consensus.OU.line} ${pct(consensus.OU.OVER)}`);
   const books = x ? x.books : consensus.OU ? consensus.OU.books : 0;
-  return [head, parts.length ? `  piață: ${parts.join(' · ')} (${books} case)` : '  piață: fără cote complete'];
+  const when = consensus.latestCapturedAt ? `, cote de la ${formatTime(new Date(consensus.latestCapturedAt))}` : '';
+  return [head, parts.length ? `  piață: ${parts.join(' · ')} (${books} case${when})` : '  piață: fără cote complete'];
 }
 
 const CUP_NOTE = 'Doar informativ: probabilități implicite ale pieței (media caselor, fără marjă). Modelul FVIS nu se aplică meciurilor din cupele europene (D-13), deci nu există EV sau statusuri.';

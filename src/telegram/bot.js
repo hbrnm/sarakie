@@ -105,6 +105,13 @@ function createBot({ token, allowedUserIds, logger, getStatus, data = null, now 
       return messages.fixturesMessages(items, { days, competitionCode: code });
     },
     quota: async () => (data ? messages.quotaMessage(await data.quota()) : messages.dataUnavailableMessage()),
+    // D-20: every match of today (or tomorrow) from stored analyses; 0 credits.
+    azi: async (args) => {
+      if (!data || !data.today) return messages.dataUnavailableMessage();
+      const arg = (args[0] || '').toLowerCase();
+      if (arg && !['maine', 'mâine', 'miine'].includes(arg)) return 'Folosire: /azi sau /azi maine';
+      return splitMessage(await data.today({ tomorrow: Boolean(arg) }));
+    },
     // On-demand analysis (Phase 5.3): the full argument text is needed for team names with spaces.
     analyze: async (args, rest) => (data && data.analyze ? splitMessage(await data.analyze(rest)) : messages.dataUnavailableMessage()),
     // Re-sends the latest stored digest; never re-runs the scanner and uses no credits.

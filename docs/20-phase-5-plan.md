@@ -148,3 +148,7 @@ Verification: 185/185 tests, lint clean; migrations 1–4 and the DB assertions 
 ### Schedule change (2026-10-15, PO decision)
 
 `daily-sync` (sync → scan → settle) runs at **08:17 UTC**: 10:17 Bucharest in winter time (from 25 Oct 2026), 11:17 until then. `scan-watchdog` follows three hours later at 11:17 UTC. GitHub cron stays best effort.
+
+### D-20 `/azi` (2026-10-15)
+
+`src/pipeline/today.js` builds one message for a Europe/Bucharest calendar day (`/azi`, `/azi maine`; DST-safe day bounds) from stored data only: for each league fixture the rows of its most recent recorded analysis (`latestPredictions` in `analysisStore`), shown as stored (no recalculation); fixtures never analysed point to `/analyze`; UCL/UEL use the D-19 market view, which now also shows the capture time of the odds. No provider calls, no credits, nothing recorded. Tests: day bounds across the DST change, stored analysis + cup view, unanalysed fixture, bot argument handling (189/189).

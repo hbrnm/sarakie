@@ -177,3 +177,16 @@ test('/analyze passes the full argument text (team names with spaces) and splits
   assert.ok(calls.length >= 2);
   assert.ok(calls.every((c) => c.payload.text.length <= 4096));
 });
+
+test('/azi and /azi maine call the day report; other arguments get the usage line', async (t) => {
+  const seen = [];
+  const { logger } = createMemoryLogger();
+  const data = { today: async (o) => { seen.push(o); return 'raport'; } };
+  const bot = createBot({ token: VALID_ENV.TELEGRAM_BOT_TOKEN, allowedUserIds: new Set([USER]), logger, getStatus: () => ({ version: '0.1.0', uptimeSeconds: 5, now: NOW }), data, now: () => NOW });
+  const calls = stubTelegram(bot, t);
+  await bot.handleUpdate(messageUpdate({ userId: USER, text: '/azi' }));
+  await bot.handleUpdate(messageUpdate({ userId: USER, text: '/azi mâine' }));
+  await bot.handleUpdate(messageUpdate({ userId: USER, text: '/azi ieri' }));
+  assert.deepEqual(seen, [{ tomorrow: false }, { tomorrow: true }]);
+  assert.match(calls.at(-1).payload.text, /Folosire: \/azi/);
+});

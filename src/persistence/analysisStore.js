@@ -39,14 +39,14 @@ function createAnalysisStore(db) {
   }
 
   /** Scheduled fixtures kicking off in [from, to), oldest first. */
-  async function upcomingFixtures({ from, to, competitionCodes }) {
+  async function upcomingFixtures({ from, to, competitionCodes, statuses = ['SCHEDULED'] }) {
     const rows = unwrap(
       await db
         .from('fixtures')
         .select(FIXTURE_COLUMNS)
         .gte('kickoff_utc', from.toISOString())
         .lt('kickoff_utc', to.toISOString())
-        .eq('status', 'SCHEDULED')
+        .in('status', statuses)
         .in('competition_code', competitionCodes)
         .order('kickoff_utc', { ascending: true }),
       'read upcoming fixtures',
@@ -317,6 +317,33 @@ function createAnalysisStore(db) {
     }
   }
 
+  /**
+   * The latest recorded analysis of each fixture (all rows of its most recent run).
+   * @returns {Promise<Map<string, object[]>>} fixture id → prediction rows
+   */
+  async function latestPredictions(fixtureIds) {
+    const out = new Map();
+    if (!fixtureIds.length) return out;
+    const COLS = 'id, analysis_run_id, fixture_id, mode, created_at, market_code, selection_code, line, p_model, decimal_odds, bookmaker_key, ev, status, reason_codes';
+    for (let i = 0; i < fixtureIds.length; i += 20) {
+      const part = fixtureIds.slice(i, i + 20);
+      const rows = [];
+      for (let from = 0; ; from += PAGE) {
+        const page = unwrap(
+          await db.from('predictions').select(COLS).in('fixture_id', part).order('id', { ascending: false }).range(from, from + PAGE - 1),
+          'read latest predictions',
+        );
+        rows.push(...page);
+        if (page.length < PAGE) break;
+      }
+      for (const id of part) {
+        const mine = rows.filter((r) => r.fixture_id === id);
+        if (mine.length) out.set(id, mine.filter((r) => r.analysis_run_id === mine[0].analysis_run_id));
+      }
+    }
+    return out;
+  }
+
   /** Inserts outcomes; one already settled by a concurrent run is skipped (ON CONFLICT DO NOTHING). */
   async function insertOutcomes(rows) {
     for (let i = 0; i < rows.length; i += PAGE) {
@@ -325,6 +352,7 @@ function createAnalysisStore(db) {
   }
 
   return {
+    latestPredictions,
     unsettledPredictions,
     insertOutcomes,
     getDigest,

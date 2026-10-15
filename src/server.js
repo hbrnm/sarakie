@@ -13,6 +13,7 @@ const { createAnalysisStore } = require('./persistence/analysisStore');
 const { createOddsApiAdapter } = require('./providers/oddsApi');
 const { createGeminiExplainer } = require('./explain/gemini');
 const { createOnDemandAnalyzer } = require('./pipeline/onDemand');
+const { todayReport } = require('./pipeline/today');
 
 async function main() {
   let config;
@@ -54,10 +55,12 @@ async function main() {
         logger.warn('gemini.unavailable', { error: err && err.message });
       }
     }
-    const onDemand = createOnDemandAnalyzer({ store: createAnalysisStore(db), repo, odds, budget, gemini, logger });
+    const analysisStore = createAnalysisStore(db);
+    const onDemand = createOnDemandAnalyzer({ store: analysisStore, repo, odds, budget, gemini, logger });
     logger.info('analyze.configured', { odds: Boolean(odds), gemini: Boolean(gemini) });
     data = {
       analyze: (text) => onDemand.analyze(text),
+      today: (opts) => todayReport({ store: analysisStore }, opts),
       upcoming: (q) => queries.upcoming(q),
       quota: () => queries.quota({ budget }),
       ping: () => queries.ping(),
