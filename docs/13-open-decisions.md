@@ -5,7 +5,7 @@
 | D-00 | Documentation language | English | **APPROVED** 2026-10-15 |
 | D-00b | Repository visibility | Private | **CONFIRMED** by PO 2026-10-15 |
 | D-01 | Run a provider feasibility spike (Phase 2a) before Phase 1 | Yes. It resolves the blocking risk on API-Football free-plan seasons and odds | **APPROVED** 2026-10-15 |
-| D-02 | Fallback plan if the API-Football free plan cannot serve current-season data | Evaluate free supplementary sources (S-50 results, S-52 odds) before considering any paid tier | **OPEN — now blocking.** Phase 2a verified that the free plan only serves seasons 2022–2024 (S-04, S-05) |
+| D-02 | Fallback plan if the API-Football free plan cannot serve current-season data | Evaluate free supplementary sources (S-50 results, S-52 odds) before considering any paid tier | **APPROVED** 2026-10-15: option 1 (free-source combination); Phase 2b probe to confirm |
 | D-03 | Scanner execution location | Option A: run inside GitHub Actions ([02 §2.1](02-architecture.md)) | **APPROVED** 2026-10-15 |
 | D-04 | Telegram bot message language | Romanian (technical identifiers in English) | **APPROVED** 2026-10-15 |
 | D-05 | Gemini on free tier given data-use terms and possible EEA restriction (S-40, S-42) | Keep Gemini optional; verify EEA availability before Phase 4; template fallback mandatory | **APPROVED** 2026-10-15 (Gemini optional; EEA availability to verify before Phase 4) |

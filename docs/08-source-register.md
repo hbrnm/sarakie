@@ -61,6 +61,6 @@ Additional observation (probe run): the `/status` counter showed 1 request used 
 
 | ID | Source | Use | Status |
 |---|---|---|---|
-| S-50 | football-data.co.uk CSVs | Historical results + closing odds (multiple bookmakers) for the top 5 leagues; candidate for model fitting and Phase 6 closing-line comparison | UNVERIFIED (content, update cadence, terms of use) |
-| S-51 | football-data.org free tier | Fixtures/results for major leagues; no odds | UNVERIFIED |
-| S-52 | The Odds API free tier | Pre-match odds alternative | UNVERIFIED |
+| S-50 | football-data.co.uk CSVs | Historical results + closing odds (multiple bookmakers; `C`-suffixed columns are closing prices, e.g. `PSCH`, `AvgC>2.5`) for the top 5 leagues; no BTTS/DC/DNB columns expected | SECONDARY ([soccerdata docs](https://soccerdata.readthedocs.io/en/stable/datasources/MatchHistory.html)); terms of use UNVERIFIED; Phase 2b probe pending |
+| S-51 | football-data.org free tier | Fixtures/results for major leagues; no odds. Secondary sources: 12 competitions incl. the top 5; 10 req/min; **current season only**; scores may be delayed | SECONDARY ([thestatsapi](https://www.thestatsapi.com/blog/football-data-org-free-tier-limits-2026)); Phase 2b probe pending |
+| S-52 | The Odds API free tier | Pre-match odds alternative. Event-odds cost = markets returned × regions; free monthly credit allowance and soccer market keys (btts, draw_no_bet, double_chance, alternate_totals) are UNVERIFIED | SECONDARY ([oddsapiR docs](https://stat.ethz.ch/CRAN/web/packages/oddsapiR/refman/oddsapiR.html)); Phase 2b probe pending |

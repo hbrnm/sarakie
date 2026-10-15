@@ -537,5 +537,6 @@ Dated record of Product Owner approvals. It updates §15 without rewriting it.
 | 2026-10-15 | Decisions D-01, D-03, D-04, D-05, D-06, D-07 approved (see `docs/13-open-decisions.md`). |
 | 2026-10-15 | Phase 2a (provider feasibility spike) approved to run **before** Phase 1 (D-01). Its scope is measurement only: no production code, no deployment. |
 | 2026-10-15 | Phase 2a option A (GitHub Actions probe) approved; merge of `spike/provider-feasibility` into `main` approved. |
+| 2026-10-15 | D-02 option 1 (free-source combination) chosen; Phase 2b probe approved and merged to `main`. Spike-only secrets: `FOOTBALL_DATA_ORG_KEY`, `ODDS_API_KEY`. |
 
 Phase 1 and all later phases remain **not authorized** until explicitly approved.
