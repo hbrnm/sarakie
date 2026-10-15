@@ -85,4 +85,6 @@ Design notes:
 
 Verification: 151/151 unit tests, lint clean; all migrations and both DB test files pass on a local PostgreSQL 16 (CI uses 17). Read-only check of the live database: in the next 7 days, every BUNDESLIGA, LALIGA, SERIEA and LIGUE1 fixture has linked odds; EPL has none yet (no EPL match within the 48 h odds horizon at the last sync). League history: 349–458 finished matches per league.
 
-Not yet done: migration 3 is **not applied** to Supabase (waits for merge approval); no end-to-end run against live data, since the service-role key is only available in GitHub Actions and on Render (first live run is the 5.2 scanner).
+CI run 38714801774 green (test + db jobs). Merge into `main` and migration 3 approved by the PO on 2026-10-15.
+
+Not yet done: no end-to-end run against live data, since the service-role key is only available in GitHub Actions and on Render (first live run is the 5.2 scanner).
