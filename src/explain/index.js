@@ -32,7 +32,14 @@ async function explainAnalysis({ match, evaluation, estimate, gemini = null, log
     }
     if (rejectionReason && logger) logger.warn('explain.fallback_to_template', { reason: rejectionReason });
   }
-  return { text: renderAnalysis(facts, commentary), generator, validated: generator === 'gemini', rejectionReason, facts };
+  return {
+    text: renderAnalysis(facts, commentary),
+    generator,
+    modelId: generator === 'gemini' ? gemini.modelId ?? null : null,
+    validated: generator === 'gemini',
+    rejectionReason,
+    facts,
+  };
 }
 
 module.exports = { explainAnalysis };

@@ -25,6 +25,7 @@ function createGeminiExplainer({ apiKey, modelId, client, timeoutMs = 8000 }) {
     ai = new GoogleGenAI({ apiKey });
   }
   return {
+    modelId,
     async commentary(facts) {
       const call = ai.models.generateContent({
         model: modelId,

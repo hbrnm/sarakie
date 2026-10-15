@@ -90,42 +90,31 @@ function createAnalysisStore(db) {
     return bookmakers;
   }
 
-  /**
-   * Pre-match quotes for a fixture captured at or after `since`. Snapshots are found by their
-   * own fixture_id and through odds_event_links (events linked after capture).
-   * @returns {Promise<import('../domain/types').OddsQuote[] & { snapshotId: number }[]>}
-   */
-  async function loadQuotes({ fixtureId, since }) {
-    const links = unwrap(
-      await db.from('odds_event_links').select('provider_event_id').eq('source_provider', ODDS).eq('fixture_id', fixtureId),
-      'read odds event links',
-    );
-    const COLUMNS = 'id, provider_event_id, bookmaker_id, market_code, selection_code, line, decimal_odds, kind, source_timestamp, captured_at, source_provider';
-    const page = async (filter, what) => {
-      const out = [];
-      for (let from = 0; ; from += PAGE) {
-        const rows = unwrap(
-          await filter(db.from('odds_snapshots').select(COLUMNS).eq('kind', 'pre_match').gte('captured_at', since.toISOString()))
-            .order('id', { ascending: true })
-            .range(from, from + PAGE - 1),
-          what,
-        );
-        out.push(...rows);
-        if (rows.length < PAGE) return out;
-      }
-    };
-    const byId = new Map();
-    for (const r of await page((q) => q.eq('fixture_id', fixtureId), 'read fixture odds')) byId.set(r.id, r);
-    const eventIds = links.map((l) => l.provider_event_id);
-    if (eventIds.length) {
-      for (const r of await page((q) => q.eq('source_provider', ODDS).in('provider_event_id', eventIds), 'read linked odds')) byId.set(r.id, r);
+  const QUOTE_COLUMNS = 'id, provider_event_id, bookmaker_id, market_code, selection_code, line, decimal_odds, kind, source_timestamp, captured_at, source_provider';
+
+  /** All pre-match snapshot rows matching `filter`, captured at or after `since` (paged). */
+  async function snapshotRows(filter, since, what) {
+    const out = [];
+    for (let from = 0; ; from += PAGE) {
+      const rows = unwrap(
+        await filter(db.from('odds_snapshots').select(QUOTE_COLUMNS).eq('kind', 'pre_match').gte('captured_at', since.toISOString()))
+          .order('id', { ascending: true })
+          .range(from, from + PAGE - 1),
+        what,
+      );
+      out.push(...rows);
+      if (rows.length < PAGE) return out;
     }
-    const books = await bookmakerById();
-    const missing = [...byId.values()].some((r) => !books.has(r.bookmaker_id));
-    if (missing) bookmakers = null;
-    const finalBooks = missing ? await bookmakerById() : books;
-    return [...byId.values()].map((r) => {
-      const b = finalBooks.get(r.bookmaker_id) || { key: `id:${r.bookmaker_id}`, name: `#${r.bookmaker_id}` };
+  }
+
+  async function toQuotes(rows) {
+    let books = await bookmakerById();
+    if (rows.some((r) => !books.has(r.bookmaker_id))) {
+      bookmakers = null; // new bookmakers were added since the cache was filled
+      books = await bookmakerById();
+    }
+    return rows.map((r) => {
+      const b = books.get(r.bookmaker_id) || { key: `id:${r.bookmaker_id}`, name: `#${r.bookmaker_id}` };
       return {
         snapshotId: r.id,
         sourceProvider: r.source_provider,
@@ -141,6 +130,73 @@ function createAnalysisStore(db) {
         capturedAt: new Date(r.captured_at).toISOString(),
       };
     });
+  }
+
+  /** Provider event ids linked to a fixture (odds_event_links). */
+  async function linkedEventIds(fixtureId) {
+    const links = unwrap(
+      await db.from('odds_event_links').select('provider_event_id').eq('source_provider', ODDS).eq('fixture_id', fixtureId),
+      'read odds event links',
+    );
+    return links.map((l) => l.provider_event_id);
+  }
+
+  /**
+   * Pre-match quotes for a fixture captured at or after `since`. Snapshots are found by their
+   * own fixture_id and through odds_event_links (events linked after capture).
+   * @returns {Promise<(import('../domain/types').OddsQuote & { snapshotId: number })[]>}
+   */
+  async function loadQuotes({ fixtureId, since }) {
+    const byId = new Map();
+    for (const r of await snapshotRows((q) => q.eq('fixture_id', fixtureId), since, 'read fixture odds')) byId.set(r.id, r);
+    const eventIds = await linkedEventIds(fixtureId);
+    if (eventIds.length) {
+      for (const r of await snapshotRows((q) => q.eq('source_provider', ODDS).in('provider_event_id', eventIds), since, 'read linked odds')) byId.set(r.id, r);
+    }
+    return toQuotes([...byId.values()]);
+  }
+
+  /** Pre-match quotes of provider events (UCL/UEL market view, D-19). */
+  async function loadEventQuotes({ eventIds, since }) {
+    if (!eventIds.length) return [];
+    return toQuotes(await snapshotRows((q) => q.eq('source_provider', ODDS).in('provider_event_id', eventIds), since, 'read event odds'));
+  }
+
+  /** Odds events (provider metadata) kicking off in [from, to) for the given competitions. */
+  async function upcomingOddsEvents({ from, to, competitionCodes }) {
+    const rows = unwrap(
+      await db
+        .from('odds_events')
+        .select('provider_event_id, competition_code, kickoff_utc, home_team_name, away_team_name')
+        .eq('source_provider', ODDS)
+        .gte('kickoff_utc', from.toISOString())
+        .lt('kickoff_utc', to.toISOString())
+        .in('competition_code', competitionCodes)
+        .order('kickoff_utc', { ascending: true }),
+      'read upcoming odds events',
+    );
+    return rows.map((r) => ({
+      providerEventId: r.provider_event_id,
+      competitionCode: r.competition_code,
+      kickoffUtc: new Date(r.kickoff_utc).toISOString(),
+      homeTeamName: r.home_team_name,
+      awayTeamName: r.away_team_name,
+    }));
+  }
+
+  /** Every known name of the given teams (canonical, short, provider names) for matching user input. */
+  async function teamAliases(teamIds) {
+    const out = new Map(teamIds.map((id) => [id, []]));
+    if (!teamIds.length) return out;
+    for (const t of unwrap(await db.from('teams').select('id, name, short_name').in('id', teamIds), 'read teams')) {
+      out.get(t.id).push(t.name, t.short_name);
+      teamNames.set(t.id, t.short_name || t.name);
+    }
+    for (const m of unwrap(await db.from('provider_team_map').select('team_id, provider_name').in('team_id', teamIds), 'read team names')) {
+      out.get(m.team_id).push(m.provider_name);
+    }
+    for (const [id, names] of out) out.set(id, [...new Set(names.filter(Boolean))]);
+    return out;
   }
 
   /** Registers a model version once (immutable); returns its id. */
@@ -250,6 +306,10 @@ function createAnalysisStore(db) {
     loadHistory,
     teamName,
     loadQuotes,
+    loadEventQuotes,
+    linkedEventIds,
+    upcomingOddsEvents,
+    teamAliases,
     ensureModelVersion,
     startRun,
     finishRun,

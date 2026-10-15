@@ -2,6 +2,7 @@
 
 const { Telegraf } = require('telegraf');
 const messages = require('./messages');
+const { splitMessage } = require('./send');
 const { COMPETITIONS } = require('../domain/competitions');
 
 /**
@@ -104,6 +105,8 @@ function createBot({ token, allowedUserIds, logger, getStatus, data = null, now 
       return messages.fixturesMessages(items, { days, competitionCode: code });
     },
     quota: async () => (data ? messages.quotaMessage(await data.quota()) : messages.dataUnavailableMessage()),
+    // On-demand analysis (Phase 5.3): the full argument text is needed for team names with spaces.
+    analyze: async (args, rest) => (data && data.analyze ? splitMessage(await data.analyze(rest)) : messages.dataUnavailableMessage()),
     // Re-sends the latest stored digest; never re-runs the scanner and uses no credits.
     scan: async () => (data && data.latestDigest ? messages.scanMessages(await data.latestDigest()) : messages.dataUnavailableMessage()),
   };
@@ -116,9 +119,10 @@ function createBot({ token, allowedUserIds, logger, getStatus, data = null, now 
     const handler = name && Object.hasOwn(commands, name) ? commands[name] : null;
     if (!handler) return ctx.reply(messages.unknownMessage());
     const args = text.trim().split(/\s+/).slice(1, 3).map((a) => a.slice(0, 32));
+    const rest = text.trim().replace(/^\S+\s*/, '').slice(0, 120);
     let out;
     try {
-      out = await handler(args);
+      out = await handler(args, rest);
     } catch (err) {
       logger.error('telegram.command_failed', { command: name, error: err && err.message });
       out = messages.dataUnavailableMessage();

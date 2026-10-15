@@ -46,7 +46,7 @@ const schema = z.object({
   // Public base URL used to register the webhook. Render sets RENDER_EXTERNAL_URL automatically.
   WEBHOOK_BASE_URL: z.url({ protocol: /^https$/ }).optional(),
   RENDER_EXTERNAL_URL: z.url({ protocol: /^https$/ }).optional(),
-  // Not used in Phase 1; validated only if present.
+  // Optional; validated only if present. ODDS_API_KEY enables fresh odds for /analyze (Phase 5.3).
   FOOTBALL_DATA_ORG_KEY: optionalSecret,
   ODDS_API_KEY: optionalSecret,
   GEMINI_API_KEY: optionalSecret,
@@ -91,6 +91,8 @@ function loadConfig(env = process.env) {
       webhookPath: '/telegram/webhook',
     }),
     supabase: c.SUPABASE_URL && c.SUPABASE_SERVICE_ROLE_KEY ? Object.freeze({ url: c.SUPABASE_URL, serviceRoleKey: c.SUPABASE_SERVICE_ROLE_KEY }) : null,
+    oddsApiKey: c.ODDS_API_KEY || null,
+    gemini: c.GEMINI_API_KEY && c.GEMINI_MODEL_ID ? Object.freeze({ apiKey: c.GEMINI_API_KEY, modelId: c.GEMINI_MODEL_ID }) : null,
     publicBaseUrl: (c.WEBHOOK_BASE_URL || c.RENDER_EXTERNAL_URL || '').replace(/\/+$/, '') || null,
     secretValues: SECRET_KEYS.map((k) => cleaned[k]).filter(Boolean),
   });

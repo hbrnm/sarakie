@@ -14,9 +14,10 @@ function startMessage() {
   return [
     'Bun venit în FVIS — Football Value Intelligence System.',
     '',
-    'Stadiu actual: Faza 5 (scanare zilnică). Analiza la cerere (/analyze) urmează.',
+    'Stadiu actual: Faza 5 (scanare zilnică și analiză la cerere).',
     '',
     'Comenzi:',
+    '/analyze <gazde> - <oaspeți> — analiza unui meci',
     '/scan — ultimul rezumat al scanării zilnice',
     '/fixtures — meciurile următoare',
     '/quota — consumul surselor de date',
@@ -38,8 +39,9 @@ function helpMessage() {
     '   ligi: epl, laliga, seriea, bundesliga, ligue1, ucl, uel',
     '/quota — credite de cote și cereri către surse',
     '/scan — retrimite ultimul rezumat al scanării zilnice (nu rulează o scanare nouă)',
-    '',
-    'Comandă planificată: /analyze <gazde> <oaspeți>.',
+    '/analyze <gazde> - <oaspeți> — analiza unui meci din următoarele 7 zile',
+    '   cote proaspete pentru toate piețele (circa 6 credite; refolosite 2 ore)',
+    '   cupele europene: doar probabilitățile pieței (modelul nu se aplică)',
   ].join('\n');
 }
 

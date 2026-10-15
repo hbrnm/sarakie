@@ -104,3 +104,19 @@ test('watchdog alerts when no successful scanner run exists today, stays quiet o
   assert.equal(ok.ok, true);
   assert.equal(s2.sent.length, 0);
 });
+
+test('UCL/UEL days: the digest has a market-only cup section; nothing is recorded for cups (D-19)', async () => {
+  const { fake, store } = seed();
+  fake.table('odds_events').push({ source_provider: 'the_odds_api', provider_event_id: 'ucl-1', competition_code: 'UCL', kickoff_utc: new Date(NOW.getTime() + 3600000 * 10).toISOString(), home_team_name: 'Benfica', away_team_name: 'Celtic' });
+  fake.table('bookmakers').push({ id: 99, source_provider: 'the_odds_api', provider_bookmaker_key: 'cup', name: 'Cup' });
+  [['HOME', 1.25], ['DRAW', 6.5], ['AWAY', 11]].forEach(([sel, o], i) =>
+    fake.table('odds_snapshots').push({ id: 9000 + i, fixture_id: null, source_provider: 'the_odds_api', provider_event_id: 'ucl-1', bookmaker_id: 99, market_code: '1X2', selection_code: sel, line: null, decimal_odds: o, kind: 'pre_match', source_timestamp: null, captured_at: NOW.toISOString() }),
+  );
+  const sender = fakeSender();
+  const r = await scan({ store, sender, chatIds: [1], now: () => NOW });
+  assert.equal(r.cups, 1);
+  const text = sender.sent[0].text;
+  assert.match(text, /CUPE EUROPENE — DOAR PIAȚA \(informativ\)/);
+  assert.match(text, /UEFA Champions League · .* — Benfica – Celtic\n {2}piață: 1 \d+\.\d% · X \d+\.\d% · 2 \d+\.\d% \(1 case\)/);
+  assert.equal(fake.table('predictions').filter((p) => p.fixture_id === 'ucl-1').length, 0);
+});

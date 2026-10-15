@@ -7,8 +7,11 @@ const { analyzeFixture, SCANNER_MARKETS } = require('../pipeline/analyzeFixture'
 const { recordAnalysis } = require('../pipeline/record');
 const { buildDigest } = require('../telegram/digest');
 const { bucharestDate } = require('../time/format');
+const { marketConsensus } = require('../domain/odds/consensus');
 
-const DOMESTIC = COMPETITIONS.filter((c) => c.modelApplicable).map((c) => c.code); // UCL/UEL informational only (D-13)
+const DOMESTIC = COMPETITIONS.filter((c) => c.modelApplicable).map((c) => c.code);
+const CUPS = COMPETITIONS.filter((c) => !c.modelApplicable).map((c) => c.code); // UCL/UEL: market view only (D-13, D-19)
+const QUOTE_LOOKBACK_MS = 24 * 3600 * 1000;
 
 /**
  * Daily scanner (Phase 5.2). Runs right after daily-sync in the same workflow, so it
@@ -59,12 +62,26 @@ async function scan({ store, sender = null, chatIds = [], usage = null, now = ()
       }
     }
 
+    // D-19: cup matches get a market-only view (no model, no predictions recorded).
+    const cups = [];
+    try {
+      const events = await store.upcomingOddsEvents({ from: t0, to: new Date(t0.getTime() + horizonHours * 3600000), competitionCodes: CUPS });
+      const quotes = await store.loadEventQuotes({ eventIds: events.map((e) => e.providerEventId), since: new Date(t0.getTime() - QUOTE_LOOKBACK_MS) });
+      for (const event of events) {
+        const consensus = marketConsensus(quotes.filter((q) => q.providerEventId === event.providerEventId));
+        if (consensus['1X2'] || consensus.OU) cups.push({ event, consensus });
+      }
+      report.cups = cups.length;
+    } catch (err) {
+      if (logger) logger.error('scan.cups_failed', { error: err && err.message });
+    }
+
     const existing = await store.getDigest(scanDate);
     if (existing) {
       report.digest = 'ALREADY_EXISTS';
     } else {
       const text = buildDigest({
-        scanDate, horizonHours, results, failed: report.failed,
+        scanDate, horizonHours, results, failed: report.failed, cups,
         usage: usage ? await usage().catch(() => null) : null,
         modelVersion: MODEL_VERSION, riskVersion: RISK_VERSION,
       });
@@ -112,4 +129,4 @@ async function scanWatchdog({ store, sender, chatIds, now = () => new Date() }) 
   return { scanDate, ok: false, alerted: chatIds.length };
 }
 
-module.exports = { scan, scanWatchdog, DOMESTIC };
+module.exports = { scan, scanWatchdog, DOMESTIC, CUPS };

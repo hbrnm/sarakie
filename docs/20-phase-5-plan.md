@@ -115,3 +115,20 @@ Verification: 164/164 tests, lint clean. Tests cover one digest per day across d
 ### D-18 implementation (risk rules 1.1.0)
 
 `TEAM_SAMPLE_SMALL` qualification gate in `src/domain/risk/evaluate.js`: if `n_H` or `n_A` (team matches in the model window, from the estimate diagnostics) is below `minTeamMatchesQualify` = 10 (PROVISIONAL), a positive-EV selection is at most WATCHLIST. The model and its outputs are unchanged; predictions are still recorded. The new risk config hash changes `input_hash`, so the next scan records a fresh set for every fixture. Applied to the first live scan, the three promoted-team QUALIFIED selections (n = 6–8) would be WATCHLIST; Frankfurt – Köln (38/38) stays QUALIFIED.
+
+## 8. Sub-phase 5.3 — implementation (2026-10-15)
+
+| Deliverable | File |
+|---|---|
+| `/analyze <home> - <away>` (also "vs", or two single words; one name lists that team's matches) | `src/telegram/bot.js`, `src/pipeline/onDemand.js` |
+| Match resolution over domestic fixtures in the next 7 days with the shared team matcher (all known names: canonical, short, provider); ambiguous → list, unknown → message; never guessed | `resolveMatch` in `src/pipeline/onDemand.js`, `teamAliases` in `src/persistence/analysisStore.js` |
+| Fresh odds (option A, D-16): one event-odds call with `h2h, totals, alternate_totals, btts, draw_no_bet, double_chance`, `purpose = on_demand` (credit cap 200); reuse when an on-demand batch younger than 2 h exists; unlinked fixtures are linked through the free events list; concurrent requests for one fixture share one fetch | `refreshOdds`, `ensureEventId` |
+| Same pipeline as the scanner: `analyzeFixture` in mode `on_demand`, Gemini commentary when `GEMINI_API_KEY` + `GEMINI_MODEL_ID` are set (validated, template fallback), run + predictions + explanation recorded | `src/pipeline/onDemand.js`, `src/server.js` |
+| D-19 option A: UCL/UEL matches → market-only view (mean of complete per-bookmaker de-vigged sets for 1X2 and O/U 2.5); also a cup section in the daily digest. No model, no EV, no status, nothing recorded, no extra credits | `src/domain/odds/consensus.js`, `src/telegram/marketView.js`, `src/jobs/scan.js`, `src/telegram/digest.js` |
+| Config exposes `ODDS_API_KEY` (optional) and Gemini settings; on-demand odds requests are written to `provider_request_log` | `src/config/index.js`, `src/server.js` |
+
+Failure behaviour: credit cap reached, provider error or missing `ODDS_API_KEY` → the analysis still runs on the odds already stored and the reply says why the odds were not refreshed (stale or not-fetched markets become `INSUFFICIENT_DATA` by the risk rules).
+
+Verification: 178/178 tests, lint clean. New tests: query parsing (including two-word team names), one fetch with all six markets, link creation, reuse within 2 h, refetch after 2 h, double tap, reversed order, single team, unknown match, missing key, credit cap, cup market view (no predictions, no credits), consensus maths, digest cup section, `/analyze` argument passing and message splitting.
+
+PO actions before the live test: add `ODDS_API_KEY` on Render (same value as the GitHub secret); `GEMINI_API_KEY` and `GEMINI_MODEL_ID` optional.

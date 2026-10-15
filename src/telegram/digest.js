@@ -3,6 +3,7 @@
 const { buildFacts } = require('../explain/facts');
 const { reasonText } = require('../explain/labels');
 const { DISCLAIMER } = require('../explain/template');
+const { marketViewLines, CUP_NOTE } = require('./marketView');
 
 const MAX_ITEMS = 25; // per section; keeps the digest readable and under the stored-text limit
 
@@ -18,9 +19,10 @@ const MAX_ITEMS = 25; // per section; keeps the digest readable and under the st
  *   usage?: { used: number, monthlyLimit: number, providerRemaining: number|null } | null,
  *   modelVersion: string,
  *   riskVersion: string,
+ *   cups?: { event: object, consensus: object }[],   UCL/UEL market-only view (D-19)
  * }} input
  */
-function buildDigest({ scanDate, horizonHours, results, failed, usage = null, modelVersion, riskVersion }) {
+function buildDigest({ scanDate, horizonHours, results, failed, usage = null, modelVersion, riskVersion, cups = [] }) {
   const items = { QUALIFIED: [], WATCHLIST: [] };
   const totals = { QUALIFIED: 0, WATCHLIST: 0, NO_VALUE: 0, INSUFFICIENT_DATA: 0 };
   const fixtureReasons = new Map();
@@ -59,6 +61,13 @@ function buildDigest({ scanDate, horizonHours, results, failed, usage = null, mo
   section('QUALIFIED', 'ELIGIBILE PENTRU URMĂRIRE (QUALIFIED)');
   section('WATCHLIST', 'DE URMĂRIT (WATCHLIST)');
   if (!items.QUALIFIED.length && !items.WATCHLIST.length) lines.push('', 'Modelul nu identifică azi selecții cu valoare pozitivă.');
+
+  if (cups.length) {
+    lines.push('', 'CUPE EUROPENE — DOAR PIAȚA (informativ)');
+    for (const c of cups.slice(0, MAX_ITEMS)) lines.push(...marketViewLines(c));
+    if (cups.length > MAX_ITEMS) lines.push(`… și încă ${cups.length - MAX_ITEMS}`);
+    lines.push(CUP_NOTE);
+  }
 
   lines.push('');
   if (usage) lines.push(`Credite cote luna aceasta: ${usage.used} din ${usage.monthlyLimit} (rămase la furnizor: ${usage.providerRemaining ?? 'necunoscut'})`);

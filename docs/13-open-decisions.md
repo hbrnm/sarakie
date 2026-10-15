@@ -22,3 +22,4 @@
 | D-16 | `/analyze`: one event-odds call with all 6 markets, 2 h reuse, within the 200-credit on-demand cap | Approve | **APPROVED** 2026-10-15 |
 | D-17 | Record all 16 selections per analysed fixture, including `INSUFFICIENT_DATA` | Approve | **APPROVED** 2026-10-15 |
 | D-18 | Promoted / short-history teams (3 of 4 QUALIFIED in the first live scan had 6–8 matches) | Option A: qualification gate `TEAM_SAMPLE_SMALL` — a team with fewer than 10 matches in its window caps the selection at WATCHLIST (PROVISIONAL threshold); predictions still recorded | **APPROVED** 2026-10-15 |
+| D-19 | Analysis of UCL/UEL matches (PO request 2026-10-15) | Option A now: market-only view for cup matches in the digest and `/analyze` (consensus de-vigged probabilities, no model, no EV/QUALIFIED, 0 extra credits). Option B (cross-league model extension) stays in Phase 6 | **APPROVED** 2026-10-15 (option A) |

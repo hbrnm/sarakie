@@ -6,9 +6,13 @@ const { createBot } = require('./telegram/bot');
 const { createHttpServer } = require('./http/server');
 const { version } = require('../package.json');
 const { createSupabase } = require('./persistence/supabase');
-const { createSupabaseCreditStore } = require('./persistence/repositories');
+const { createSupabaseCreditStore, createRepositories } = require('./persistence/repositories');
 const { createQueries } = require('./persistence/queries');
 const { createCreditBudget } = require('./providers/oddsApi/creditBudget');
+const { createAnalysisStore } = require('./persistence/analysisStore');
+const { createOddsApiAdapter } = require('./providers/oddsApi');
+const { createGeminiExplainer } = require('./explain/gemini');
+const { createOnDemandAnalyzer } = require('./pipeline/onDemand');
 
 async function main() {
   let config;
@@ -32,7 +36,28 @@ async function main() {
     const db = createSupabase(config.supabase);
     const budget = createCreditBudget({ store: createSupabaseCreditStore(db) });
     const queries = createQueries(db);
+    const repo = createRepositories(db);
+    // Provider request log for on-demand odds calls (path only, never the query string with the key).
+    const onRequest = (e) => {
+      const h = e.headers;
+      const num = (n) => (h && h.get(n) !== null && h.get(n) !== '' ? Number(h.get(n)) : null);
+      repo
+        .insertRequestLog([{ ...e, at: new Date(), creditsLast: num('x-requests-last'), creditsRemaining: num('x-requests-remaining') }])
+        .catch((err) => logger.warn('provider.request_log_failed', { error: err && err.message }));
+    };
+    const odds = config.oddsApiKey ? createOddsApiAdapter({ apiKey: config.oddsApiKey, budget, onRequest }) : null;
+    let gemini = null;
+    if (config.gemini) {
+      try {
+        gemini = createGeminiExplainer(config.gemini);
+      } catch (err) {
+        logger.warn('gemini.unavailable', { error: err && err.message });
+      }
+    }
+    const onDemand = createOnDemandAnalyzer({ store: createAnalysisStore(db), repo, odds, budget, gemini, logger });
+    logger.info('analyze.configured', { odds: Boolean(odds), gemini: Boolean(gemini) });
     data = {
+      analyze: (text) => onDemand.analyze(text),
       upcoming: (q) => queries.upcoming(q),
       quota: () => queries.quota({ budget }),
       ping: () => queries.ping(),

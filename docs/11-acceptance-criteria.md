@@ -49,7 +49,7 @@ Each criterion must be demonstrated with evidence (test output, logs, screenshot
 - [ ] Live Gemini call verified (needs the Product Owner's API key; optional).
 
 ## Phase 5 — Scanner and tracking
-- [ ] Scanner and `/analyze` call the same `analyzeFixture` (code review + test). *5.1: `analyzeFixture` exists and is tested against the domain engine called directly; callers come in 5.2/5.3.*
+- [x] Scanner and `/analyze` call the same `analyzeFixture` (code review + test: `src/jobs/scan.js`, `src/pipeline/onDemand.js`; `test/pipeline/`).
 - [x] `UPDATE`/`DELETE` on append-only tables fails (DB test `supabase/tests/predictions.test.sql`; local PostgreSQL 16).
 - [ ] Duplicate scheduler trigger does not create duplicate digests. *5.2: tested (`test/jobs/scan.test.js`); live confirmation pending.*
 - [x] Missed-run detection works (simulated in `test/jobs/scan.test.js`; workflow `scan-watchdog`).

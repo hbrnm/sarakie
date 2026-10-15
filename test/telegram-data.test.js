@@ -163,3 +163,17 @@ test('/health shows the last finished scanner run', async (t) => {
   await bot.handleUpdate(messageUpdate({ userId: USER, text: '/health' }));
   assert.match(calls[0].payload.text, /Ultima scanare: 2026-10-15 \(OK\)/);
 });
+
+test('/analyze passes the full argument text (team names with spaces) and splits long replies', async (t) => {
+  const db = seed();
+  const seen = [];
+  const queries = createQueries(db, { now: () => NOW });
+  const { logger } = createMemoryLogger();
+  const data = { upcoming: (q) => queries.upcoming(q), analyze: async (text) => { seen.push(text); return `rezultat\n${'x'.repeat(5000)}`; } };
+  const bot = createBot({ token: VALID_ENV.TELEGRAM_BOT_TOKEN, allowedUserIds: new Set([USER]), logger, getStatus: () => ({ version: '0.1.0', uptimeSeconds: 5, now: NOW }), data, now: () => NOW });
+  const calls = stubTelegram(bot, t);
+  await bot.handleUpdate(messageUpdate({ userId: USER, text: '/analyze Real Madrid - Atlético Madrid' }));
+  assert.deepEqual(seen, ['Real Madrid - Atlético Madrid']);
+  assert.ok(calls.length >= 2);
+  assert.ok(calls.every((c) => c.payload.text.length <= 4096));
+});
