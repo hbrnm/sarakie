@@ -28,7 +28,8 @@ test('facts contain only QUALIFIED/WATCHLIST highlights with pre-formatted numbe
 test('template message: numbers, statuses, limitations and disclaimer; no certainty language', async () => {
   const r = await explainAnalysis({ match, evaluation, estimate: EST });
   assert.equal(r.generator, 'template');
-  assert.match(r.text, /Peste 2.5 goluri — ELIGIBIL pentru urmărire \(QUALIFIED\)/);
+  assert.match(r.text, /Peste 2.5 goluri — De urmărit \(WATCHLIST\)/);
+  assert.match(r.text, /QUALIFIED suspendat/);
   assert.match(r.text, /Limitări:/);
   assert.match(r.text, /nu sigur, nu garantat, nu profitabil/);
   assert.equal(bannedPhrase(r.text.replace(/nu sigur, nu garantat/, '')), null);

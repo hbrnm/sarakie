@@ -30,7 +30,7 @@ test('/azi lists the day: latest stored analysis for league matches, market view
   const text = await todayReport({ store, now: () => NOW }, { tomorrow: true });
   assert.match(text, /^FVIS — meciurile de mâine, \d\d\.\d\d\.\d{4}/);
   assert.match(text, /Premier League\n• \d\d:\d\d Home FC – Team T02/);
-  assert.match(text, /ELIGIBIL \(QUALIFIED\): Peste 2\.5 goluri · cotă \d+\.\d\d · model \d+\.\d% · EV \+\d+\.\d%/);
+  assert.match(text, /de urmărit \(WATCHLIST\): Peste 2\.5 goluri · cotă \d+\.\d\d · model \d+\.\d% · EV \+\d+\.\d%\n {4}condiții neîndeplinite: QUALIFIED suspendat/);
   assert.match(text, /\(scanare, \d\d:\d\d\)/);
   assert.match(text, /CUPE EUROPENE — DOAR PIAȚA \(informativ\)\n• UEFA Europa League · .* — Benfica – Celtic/);
   assert.equal(fake.table('predictions').length, before);

@@ -9,6 +9,8 @@ const { NOW, FIXTURE, EST, quote, book } = require('./helpers');
 
 const scanner = (quotes, over = {}) =>
   evaluateFixture({ fixture: FIXTURE, estimate: EST, quotes, fetchedMarkets: ['1X2', 'OU'], mode: 'scanner', now: NOW, ...over });
+// QUALIFIED is suspended by default (D-23); the gate logic is tested with it enabled.
+const ENABLED = { ...defaultRiskConfig(), qualifyEnabled: 1 };
 const sel = (r, m, s, l = null) => r.selections.find((x) => x.marketCode === m && x.selectionCode === s && x.line === l);
 
 test('every in-scope selection gets exactly one status; versions are stamped', () => {
@@ -36,7 +38,7 @@ test('fairly priced markets with a margin give NO_VALUE', () => {
 test('a well-supported positive-EV price is QUALIFIED; the same price at one book only is WATCHLIST', () => {
   // Over 2.5 priced ~7% above model-fair at three books, with a normal positive margin overall.
   const boost = { market: 'OU', sel: 'OVER', line: 2.5, factor: 1.18 };
-  const r = scanner([...book('a', { margin: 0.1, boost }), ...book('b', { margin: 0.1, boost }), ...book('c', { margin: 0.1, boost })]);
+  const r = scanner([...book('a', { margin: 0.1, boost }), ...book('b', { margin: 0.1, boost }), ...book('c', { margin: 0.1, boost })], { config: ENABLED });
   const s = sel(r, 'OU', 'OVER', 2.5);
   assert.equal(s.status, 'QUALIFIED', JSON.stringify(s));
   assert.ok(s.ev >= 0.05);
@@ -133,11 +135,24 @@ test('D-18: a team with fewer than 10 matches in its window caps a qualifying se
   const boost = { market: 'OU', sel: 'OVER', line: 2.5, factor: 1.18 };
   const quotes = [...book('a', { margin: 0.1, boost }), ...book('b', { margin: 0.1, boost }), ...book('c', { margin: 0.1, boost })];
   const short = { ...EST, diagnostics: { ...EST.diagnostics, home: { ...EST.diagnostics.home, n: 6 } } };
-  const s = sel(scanner(quotes, { estimate: short }), 'OU', 'OVER', 2.5);
+  const s = sel(scanner(quotes, { estimate: short, config: ENABLED }), 'OU', 'OVER', 2.5);
   assert.equal(s.status, 'WATCHLIST');
   assert.deepEqual(s.reasonCodes, ['TEAM_SAMPLE_SMALL']);
   const atThreshold = { ...EST, diagnostics: { ...EST.diagnostics, away: { ...EST.diagnostics.away, n: 10 } } };
-  assert.equal(sel(scanner(quotes, { estimate: atThreshold }), 'OU', 'OVER', 2.5).status, 'QUALIFIED');
+  assert.equal(sel(scanner(quotes, { estimate: atThreshold, config: ENABLED }), 'OU', 'OVER', 2.5).status, 'QUALIFIED');
   // NO_VALUE and INSUFFICIENT_DATA are unaffected: the gate only applies to positive-EV selections.
   assert.equal(sel(scanner(quotes, { estimate: short }), 'BTTS', 'YES').status, 'INSUFFICIENT_DATA');
+});
+
+test('D-23: by default nothing is QUALIFIED; a qualifying selection is WATCHLIST with QUALIFIED_SUSPENDED only', () => {
+  const boost = { market: 'OU', sel: 'OVER', line: 2.5, factor: 1.18 };
+  const quotes = ['a', 'b', 'c'].flatMap((b) => book(b, { margin: 0.1, boost }));
+  const r = scanner(quotes);
+  assert.equal(r.summary.QUALIFIED, 0);
+  const s = sel(r, 'OU', 'OVER', 2.5);
+  assert.equal(s.status, 'WATCHLIST');
+  assert.deepEqual(s.reasonCodes, ['QUALIFIED_SUSPENDED']);
+  assert.equal(defaultRiskConfig().qualifyEnabled, 0);
+  // NO_VALUE is unaffected: the gate only applies to positive-EV selections.
+  assert.ok(r.selections.some((x) => x.status === 'NO_VALUE' && x.reasonCodes[0] === 'EV_NOT_POSITIVE'));
 });

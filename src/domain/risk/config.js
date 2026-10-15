@@ -7,7 +7,7 @@ const { canonicalJson } = require('../model/config');
  * Risk and eligibility thresholds (docs/06-risk-policy.md). All PROVISIONAL (D-06):
  * starting values, not validated; tuned in Phase 6.
  */
-const RISK_VERSION = '1.1.0'; // 1.1.0: TEAM_SAMPLE_SMALL qualification gate (D-18)
+const RISK_VERSION = '1.2.0'; // 1.1.0: TEAM_SAMPLE_SMALL gate (D-18); 1.2.0: QUALIFIED suspended (D-23)
 
 const RISK_PARAMETERS = Object.freeze({
   maxOddsAgeScannerMinutes: { value: 360, class: 'PROVISIONAL', note: 'scanner: odds captured in the same run (option A)' },
@@ -25,6 +25,7 @@ const RISK_PARAMETERS = Object.freeze({
   qualifyOddsMin: { value: 1.3, class: 'PROVISIONAL', note: 'odds range for QUALIFIED' },
   qualifyOddsMax: { value: 6, class: 'PROVISIONAL', note: 'odds range for QUALIFIED' },
   minBookmakers: { value: 3, class: 'PROVISIONAL', note: 'thin market below this' },
+  qualifyEnabled: { value: 0, class: 'PROVISIONAL', note: 'D-23: 0 = QUALIFIED suspended; backtest 6b found no closing-line value (docs/21)' },
   minTeamMatchesQualify: { value: 10, class: 'PROVISIONAL', note: 'D-18: a team with fewer matches in its model window caps the selection at WATCHLIST' },
 });
 
