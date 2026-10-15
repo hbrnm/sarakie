@@ -526,3 +526,15 @@ Prioritize material architectural, quantitative, security and data-integrity ris
 Never claim that a file was created, a test passed, a commit was made or a deployment succeeded unless it has actually been verified.
 
 End each session with a concise handoff report and the exact next decision required from the Product Owner.
+
+## 17. AUTHORIZATION LOG
+
+Dated record of Product Owner approvals. It updates §15 without rewriting it.
+
+| Date | Decision |
+|---|---|
+| 2026-10-15 | Phase 0 deliverables approved; `docs/phase-0-foundation` approved for merge into `main` (D-09). |
+| 2026-10-15 | Decisions D-01, D-03, D-04, D-05, D-06, D-07 approved (see `docs/13-open-decisions.md`). |
+| 2026-10-15 | Phase 2a (provider feasibility spike) approved to run **before** Phase 1 (D-01). Its scope is measurement only: no production code, no deployment. |
+
+Phase 1 and all later phases remain **not authorized** until explicitly approved.

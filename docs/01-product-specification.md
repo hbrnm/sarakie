@@ -52,7 +52,7 @@ On-demand results are persisted as predictions with `trigger = 'on_demand'`.
 | Markets | 1X2, Double Chance, Draw No Bet, O/U 1.5, O/U 2.5, O/U 3.5, BTTS |
 | Match type | Pre-match only. In-play is out of scope. |
 | Time zone | Persist in UTC; display in `Europe/Bucharest` |
-| Language of bot messages | **Open decision** (see [13](13-open-decisions.md)). Recommended: Romanian. |
+| Language of bot messages | Romanian; technical identifiers in English (APPROVED, D-04) |
 
 ## 5. Telegram commands (proposed, Phase 1/5)
 
