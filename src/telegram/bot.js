@@ -27,6 +27,19 @@ function createAuthMiddleware(allowedUserIds, logger) {
 }
 
 /**
+ * Extracts a lower-case command name from message text: "/health", "/Health@my_bot args".
+ * A command addressed to a different bot returns null.
+ * @param {string} text
+ * @param {string | undefined} botUsername
+ */
+function parseCommand(text, botUsername) {
+  const m = /^\/([A-Za-z0-9_]{1,32})(?:@([A-Za-z0-9_]{1,64}))?(?:\s|$)/.exec(text.trim());
+  if (!m) return null;
+  if (m[2] && (!botUsername || m[2].toLowerCase() !== botUsername.toLowerCase())) return null;
+  return m[1].toLowerCase();
+}
+
+/**
  * @param {{
  *   token: string,
  *   allowedUserIds: Set<number>,
@@ -46,10 +59,20 @@ function createBot({ token, allowedUserIds, logger, getStatus }) {
     return next();
   });
 
-  bot.start((ctx) => ctx.reply(messages.startMessage()));
-  bot.help((ctx) => ctx.reply(messages.helpMessage()));
-  bot.command('health', (ctx) => ctx.reply(messages.healthMessage(getStatus())));
-  bot.on('message', (ctx) => ctx.reply(messages.unknownMessage()));
+  const commands = {
+    start: () => messages.startMessage(),
+    help: () => messages.helpMessage(),
+    health: () => messages.healthMessage(getStatus()),
+  };
+
+  // Commands are recognized from the text itself, not only from Telegram's
+  // bot_command entity, so "/health" sent as code or pasted text still works.
+  bot.on('message', (ctx) => {
+    const text = typeof ctx.message.text === 'string' ? ctx.message.text : '';
+    const name = parseCommand(text, ctx.botInfo && ctx.botInfo.username);
+    const handler = name && Object.hasOwn(commands, name) ? commands[name] : null;
+    return ctx.reply(handler ? handler() : messages.unknownMessage());
+  });
 
   bot.catch((err, ctx) => {
     logger.error('telegram.handler_error', { updateType: ctx && ctx.updateType, error: err && err.message });
@@ -58,4 +81,4 @@ function createBot({ token, allowedUserIds, logger, getStatus }) {
   return bot;
 }
 
-module.exports = { createBot, createAuthMiddleware };
+module.exports = { createBot, createAuthMiddleware, parseCommand };

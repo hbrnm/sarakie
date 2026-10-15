@@ -72,3 +72,33 @@ test('unknown text gets a help hint', async (t) => {
   await bot.handleUpdate(messageUpdate({ userId: ALLOWED, text: 'salut' }));
   assert.match(calls[0].payload.text, /Comandă necunoscută/);
 });
+
+test('/health sent as code-formatted text is still recognized', async (t) => {
+  const { bot, calls } = setup(t);
+  const update = messageUpdate({ userId: ALLOWED, text: '/health' });
+  update.message.entities = [{ type: 'code', offset: 0, length: 7 }];
+  await bot.handleUpdate(update);
+  assert.match(calls[0].payload.text, /Stare: OK/);
+});
+
+test('command addressed to this bot by username, any case, is recognized', async (t) => {
+  const { bot, calls } = setup(t);
+  await bot.handleUpdate(messageUpdate({ userId: ALLOWED, text: '/HEALTH@FVIS_test_bot' }));
+  assert.match(calls[0].payload.text, /Stare: OK/);
+});
+
+test('parseCommand', () => {
+  const { parseCommand } = require('../src/telegram/bot');
+  assert.equal(parseCommand('/start', 'fvis_bot'), 'start');
+  assert.equal(parseCommand('  /help extra args', 'fvis_bot'), 'help');
+  assert.equal(parseCommand('/health@other_bot', 'fvis_bot'), null);
+  assert.equal(parseCommand('health', 'fvis_bot'), null);
+  assert.equal(parseCommand('/', 'fvis_bot'), null);
+  assert.equal(parseCommand('/constructor', 'fvis_bot'), 'constructor');
+});
+
+test('prototype names are not treated as commands', async (t) => {
+  const { bot, calls } = setup(t);
+  await bot.handleUpdate(messageUpdate({ userId: ALLOWED, text: '/constructor' }));
+  assert.match(calls[0].payload.text, /Comandă necunoscută/);
+});

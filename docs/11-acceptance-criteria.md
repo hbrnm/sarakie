@@ -24,7 +24,8 @@ Each criterion must be demonstrated with evidence (test output, logs, screenshot
 - [x] A non-allowlisted user ID gets no response; the event is logged (tested).
 - [x] A webhook request without the correct secret header gets `401` (tested + smoke test).
 - [x] `/health` reports status without exposing secrets (tested, HTTP and Telegram).
-- [ ] Deployed on Render free. Cold-start reply time is measured and reported. *(Product Owner, see [15](15-phase-1-runbook.md))*
+- [x] Deployed on Render free (2026-10-15; `/start`, `/health` verified by the Product Owner in Telegram).
+- [ ] Cold-start reply time measured and reported. *(pending: ≥ 20 min idle, then `/health`)*
 - [x] CI is green: lint, tests, `npm audit` (no high/critical findings). *(GitHub run 38689229255, 2026-10-15)*
 
 ## Phase 2 — Data integration
