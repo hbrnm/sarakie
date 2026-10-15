@@ -1,0 +1,37 @@
+# FVIS Phase 6a — cup cross-league feasibility probe (manual, measurement only, D-21).
+# Read-only: The Odds API events lists (0 credits), stored odds events, football-data.org
+# free tier, ClubElo and football-data.co.uk public CSVs, GitHub public repositories.
+name: cup-feasibility
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+      - name: Run probe
+        env:
+          FOOTBALL_DATA_ORG_KEY: ${{ secrets.FOOTBALL_DATA_ORG_KEY }}
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          node spike/cup-feasibility.js > /dev/null
+          cat spike-output/summary-6a.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: cup-feasibility-${{ github.run_id }}
+          path: spike-output/
+          retention-days: 30
+          if-no-files-found: ignore

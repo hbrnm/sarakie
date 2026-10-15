@@ -56,3 +56,13 @@ A source whose secret is missing is skipped, so the probe can run with only some
 3. Add both as GitHub Actions secrets: `FOOTBALL_DATA_ORG_KEY`, `ODDS_API_KEY`.
 4. Actions → `free-sources-feasibility` → *Run workflow* (branch `main`).
 5. Send the *Summary* table back. It contains no secrets.
+
+## cup-feasibility.js (Phase 6a, D-21)
+
+Read-only probe for a cross-league model extension for UCL/UEL, run by the manual workflow
+`.github/workflows/cup-feasibility.yml`. Measures which clubs are in the cups (The Odds API
+events lists at 0 credits, stored odds events, football-data.org CL teams), how many of them
+ClubElo and football-data.co.uk (main and extra leagues) cover, the depth of ClubElo history,
+which historical UEFA seasons the football-data.org free tier serves, and what the
+openfootball repositories contain. Output: aggregates and public club names only
+(`summary-6a.md`, `report-6a.json`). Results are written up in `docs/22-phase-6a-cup-feasibility.md`.
