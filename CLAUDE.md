@@ -570,5 +570,6 @@ Dated record of Product Owner approvals. It updates §15 without rewriting it.
 | 2026-10-15 | Telegram token fix (`ce69894`) merge approved. **D-18 option A** approved: selections involving a team with fewer than 10 matches in its model window are capped at WATCHLIST (risk rules 1.1.0). |
 | 2026-10-15 | GitHub `TELEGRAM_BOT_TOKEN` secret corrected by the PO; test message from Actions (`scan-watchdog` `send_test`) received. D-18 merge into `main` approved. |
 | 2026-10-15 | **D-19 option A** approved: on UCL/UEL days the digest (and `/analyze` for a cup match) shows a market-only view (de-vigged consensus, no model, no EV/QUALIFIED); D-13 otherwise unchanged. **Sub-phase 5.3 (`/analyze`) started.** |
+| 2026-10-15 | Phase 5.3 (`/analyze`, D-19 cup market view) merge into `main` approved; PO adds `ODDS_API_KEY` on Render. |
 
 Phase 6 and later phases remain **not authorized** until explicitly approved.
