@@ -53,4 +53,7 @@ module.exports = Object.freeze([
   ['Lille', 'Lille OSC', 'LOSC Lille'],
   ['Racing Club de Lens', 'Lens', 'RC Lens'],
   ['RC Strasbourg Alsace', 'Strasbourg'],
+  // UEFA competitions (names seen in the live smoke test, 2026-10-15)
+  ['AEK Athens', 'AEK Athina', 'AEK Athina FC'],
+  ['Sporting Lisbon', 'Sporting CP', 'Sporting Clube de Portugal'],
 ]);

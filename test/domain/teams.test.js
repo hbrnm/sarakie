@@ -72,3 +72,9 @@ test('odds events are linked to fixtures by teams and kickoff tolerance', () => 
 test('alias table has no name in two groups', () => {
   assert.doesNotThrow(() => require('../../src/domain/teams/matching'));
 });
+
+test('UEFA aliases seen in the live smoke test', () => {
+  const m = createTeamMatcher([{ id: 'a', names: ['AEK Athína FC'] }, { id: 's', names: ['Sporting Clube de Portugal', 'Sporting CP'] }]);
+  assert.equal(m.match('AEK Athens').teamId, 'a');
+  assert.equal(m.match('Sporting Lisbon').teamId, 's');
+});

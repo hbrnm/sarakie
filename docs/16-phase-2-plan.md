@@ -23,6 +23,24 @@ Known open points:
 - The Odds API **double-chance outcome naming** is unverified (S-52). Unknown forms are dropped and counted.
 - The alias table is a starter list, to be extended from the smoke-test mapping report.
 
+## 2.1 live smoke test — results (run 38703516262, 2026-10-15)
+
+| Competition | fd.org teams | Fixtures 7 d | Odds events | Odds names mapped | Events linked | CSV names mapped |
+|---|---|---|---|---|---|---|
+| EPL | 20 | 10 | 20 | 20/20 | 10/10 | 20/20 |
+| LALIGA | 20 | 11 | 21 | 20/20 | 11/11 | 20/20 |
+| SERIEA | 20 | 10 | 20 | 20/20 | 10/10 | 20/20 |
+| BUNDESLIGA | 18 | 9 | 18 | 18/18 | 9/9 | 18/18 |
+| LIGUE1 | 18 | 9 | 18 | 18/18 | 9/9 | 18/18 |
+| UCL | 36 | 18 | 18 | 34/36 | 16/18 | — |
+| UEL | **not on football-data.org free tier** | — | 18 | — | — | — |
+
+- Domestic leagues: 100% team mapping across all three sources; every odds event in the window linked to its fixture.
+- UCL: `AEK Athens` and `Sporting Lisbon` unmatched; aliases added (verify on the next run).
+- UEL: odds available (The Odds API), fixtures not available on the football-data.org free tier. UEL is therefore odds-only information (D-13 still holds: no model output).
+- Featured odds cost exactly 2 credits per competition; 14 credits for all 7. 457 credits remained after the run.
+- Featured `totals` carries several lines per event. O/U 2.5 and 3.5 are well covered; O/U 1.5 rarely appears (needs `alternate_totals`, on-demand per D-11).
+
 ## 2.2 — Persistence
 
 Status 2026-10-15:
