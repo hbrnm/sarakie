@@ -57,6 +57,7 @@ Note on freshness: if the provider updates pre-match odds only periodically (SEC
 | Odds range | `ODDS_OUT_OF_RANGE` | `1.30 ≤ odds ≤ 6.00` | PROVISIONAL |
 | Bookmaker count | `THIN_MARKET` | ≥ 3 bookmakers quoting the market | PROVISIONAL |
 | Team history (D-18, risk 1.1.0) | `TEAM_SAMPLE_SMALL` | both teams have ≥ 10 matches in their model window (`n_H`, `n_A`); typically fails for promoted teams early in a season | PROVISIONAL |
+| QUALIFIED suspension (D-23, risk 1.2.0) | `QUALIFIED_SUSPENDED` | `qualifyEnabled` = 1. Default 0 since backtest 6b (`docs/21-phase-6b-backtest-results.md`): the model is worse than the pre-match market and FVIS-like selections had negative closing-line value; re-enable only with backtest evidence of positive CLV | PROVISIONAL |
 
 All thresholds live in the model config. They are part of `config_hash`, so any change is a new config and is traceable.
 

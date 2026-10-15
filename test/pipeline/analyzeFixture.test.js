@@ -24,7 +24,8 @@ test('pipeline output equals the domain engine called directly (one engine, CLAU
   const quotes = await store.loadQuotes({ fixtureId: FIXTURE_ID, since: new Date(0) });
   const direct = evaluateFixture({ fixture, estimate: est, quotes, fetchedMarkets: ['1X2', 'OU'], mode: 'scanner', now: NOW });
   assert.deepEqual(r.evaluation, direct);
-  assert.equal(sel(r, 'OU', 'OVER', 2.5).status, 'QUALIFIED');
+  assert.equal(sel(r, 'OU', 'OVER', 2.5).status, 'WATCHLIST'); // would qualify; suspended (D-23)
+  assert.deepEqual(sel(r, 'OU', 'OVER', 2.5).reasonCodes, ['QUALIFIED_SUSPENDED']);
   assert.ok(Number.isInteger(sel(r, 'OU', 'OVER', 2.5).bestQuote.snapshotId));
   assert.deepEqual(sel(r, 'BTTS', 'YES').reasonCodes, ['ODDS_NOT_FETCHED']);
   assert.equal(r.match.home, 'Home FC');
@@ -46,7 +47,7 @@ test('odds are found through odds_event_links when snapshots carry no fixture_id
   const fixture = await store.getFixture(FIXTURE_ID);
   const r = await analyzeFixture({ fixture, mode: 'scanner', now: NOW, explain: false }, { store });
   assert.equal(r.quoteCount, 27);
-  assert.equal(sel(r, 'OU', 'OVER', 2.5).status, 'QUALIFIED');
+  assert.deepEqual(sel(r, 'OU', 'OVER', 2.5).reasonCodes, ['QUALIFIED_SUSPENDED']);
 });
 
 test('history loading never returns matches at or after asOf (leakage guard)', async () => {
@@ -116,7 +117,8 @@ test('prediction rows carry versions, exact quote, DNB push/loss and null prices
   const m = r.estimate.markets.DNB.HOME;
   assert.deepEqual([dnb.p_model, dnb.p_push, dnb.p_loss], [m.win, m.push, m.loss]);
   const ou = rows.find((x) => x.market_code === 'OU' && x.line === 2.5 && x.selection_code === 'OVER');
-  assert.equal(ou.status, 'QUALIFIED');
+  assert.equal(ou.status, 'WATCHLIST');
+  assert.deepEqual(ou.reason_codes, ['QUALIFIED_SUSPENDED']);
   assert.equal(ou.fair_odds, r.estimate.markets.OU[2.5].OVER.fairOdds);
 });
 

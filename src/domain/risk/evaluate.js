@@ -155,6 +155,8 @@ function evaluateFixture({ fixture, estimate, quotes, fetchedMarkets, mode, now,
     if (best.decimalOdds < config.qualifyOddsMin || best.decimalOdds > config.qualifyOddsMax) q.push('ODDS_OUT_OF_RANGE');
     if (bookmakerCount < config.minBookmakers) q.push('THIN_MARKET');
     if (teamSampleSmall) q.push('TEAM_SAMPLE_SMALL');
+    // D-23: until a model shows closing-line value in backtests, nothing is QUALIFIED.
+    if (!config.qualifyEnabled) q.push('QUALIFIED_SUSPENDED');
     selections.push({ ...record, status: q.length ? 'WATCHLIST' : 'QUALIFIED', reasonCodes: q });
   }
 

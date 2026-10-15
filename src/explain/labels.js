@@ -49,6 +49,7 @@ const REASONS = Object.freeze({
   ODDS_OUT_OF_RANGE: 'cotă în afara intervalului acceptat',
   THIN_MARKET: 'prea puține case de pariuri',
   TEAM_SAMPLE_SMALL: 'istoric scurt pentru o echipă (sub 10 meciuri, de ex. promovată)',
+  QUALIFIED_SUSPENDED: 'QUALIFIED suspendat: backtestul nu arată valoare reală a modelului',
 });
 
 const reasonText = (code) => REASONS[code] || code;

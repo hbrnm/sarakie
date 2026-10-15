@@ -4,6 +4,7 @@ const { buildFacts } = require('../explain/facts');
 const { reasonText } = require('../explain/labels');
 const { DISCLAIMER } = require('../explain/template');
 const { marketViewLines, CUP_NOTE } = require('./marketView');
+const { defaultRiskConfig } = require('../domain/risk/config');
 
 const MAX_ITEMS = 25; // per section; keeps the digest readable and under the stored-text limit
 
@@ -45,7 +46,11 @@ function buildDigest({ scanDate, horizonHours, results, failed, usage = null, mo
   // Same rows as the QUALIFIED section below, only reformatted; no new numbers.
   lines.push('SELECȚIILE ZILEI (QUALIFIED)');
   const picks = [...items.QUALIFIED].sort((a, b) => a.kickoffMs - b.kickoffMs || (a.facts.match < b.facts.match ? -1 : 1));
-  if (!picks.length) lines.push('Niciuna azi.');
+  if (!picks.length) {
+    lines.push(defaultRiskConfig().qualifyEnabled
+      ? 'Niciuna azi.'
+      : 'Niciuna: QUALIFIED este suspendat. Backtestul pe 2024–2026 arată că modelul nu bate cotele pieței, deci nu are selecții de recomandat (D-23).');
+  }
   for (const { facts, h } of picks.slice(0, MAX_ITEMS)) lines.push(`• ${facts.match} · ${h.selection} · cota ${h.bestOdds} · ${facts.kickoff}`);
   if (picks.length > MAX_ITEMS) lines.push(`… și încă ${picks.length - MAX_ITEMS}`);
   if (picks.length) lines.push('Doar pentru urmărire pe hârtie: modelul nu este încă validat (Faza 6).');
