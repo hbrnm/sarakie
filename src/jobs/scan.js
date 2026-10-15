@@ -1,13 +1,14 @@
 'use strict';
 
-const { COMPETITIONS } = require('../domain/competitions');
+const { COMPETITIONS, getCompetition } = require('../domain/competitions');
 const { MODEL_FAMILY, MODEL_VERSION, defaultConfig, configHash } = require('../domain/model/config');
 const { RISK_VERSION, defaultRiskConfig, riskConfigHash } = require('../domain/risk/config');
 const { analyzeFixture, SCANNER_MARKETS } = require('../pipeline/analyzeFixture');
 const { recordAnalysis } = require('../pipeline/record');
 const { buildDigest } = require('../telegram/digest');
-const { bucharestDate } = require('../time/format');
+const { bucharestDate, formatKickoff } = require('../time/format');
 const { marketConsensus } = require('../domain/odds/consensus');
+const { lineScan } = require('./lineScan');
 
 const DOMESTIC = COMPETITIONS.filter((c) => c.modelApplicable).map((c) => c.code);
 const CUPS = COMPETITIONS.filter((c) => !c.modelApplicable).map((c) => c.code); // UCL/UEL: market view only (D-13, D-19)
@@ -39,7 +40,7 @@ async function scan({ store, sender = null, chatIds = [], usage = null, now = ()
   const riskConfig = defaultRiskConfig();
   const modelVersionId = await store.ensureModelVersion({ modelFamily: MODEL_FAMILY, modelVersion: MODEL_VERSION, config: modelConfig, configHash: configHash(modelConfig) });
   const runId = await store.startRun({ trigger: 'scanner', scanDate, asOf: t0, modelVersionId, riskVersion: RISK_VERSION, riskConfigHash: riskConfigHash(riskConfig) });
-  const report = { scanDate, runId, considered: 0, analyzed: 0, recorded: 0, failed: 0, digest: null, sent: 0, sendErrors: 0 };
+  const report = { scanDate, runId, considered: 0, analyzed: 0, recorded: 0, failed: 0, digest: null, sent: 0, sendErrors: 0, line: null };
 
   try {
     const fixtures = await store.upcomingFixtures({ from: t0, to: new Date(t0.getTime() + horizonHours * 3600000), competitionCodes: DOMESTIC });
@@ -62,6 +63,27 @@ async function scan({ store, sender = null, chatIds = [], usage = null, now = ()
       }
     }
 
+    // D-24 (Phase 6d): line shopping on the same fixtures and the odds of this run; 0 credits.
+    let lineResults = [];
+    try {
+      const line = await lineScan({ store, runId, fixtures, now: t0, logger });
+      report.line = { evaluated: line.evaluated, inserted: line.inserted, failed: line.failed };
+      const matchOf = new Map(results.map((r) => [r.fixture.id, r.match]));
+      for (const r of line.results) {
+        const m = matchOf.get(r.fixture.id) || {
+          home: await store.teamName(r.fixture.homeTeamId),
+          away: await store.teamName(r.fixture.awayTeamId),
+          competition: getCompetition(r.fixture.competitionCode).name,
+          kickoff: formatKickoff(new Date(r.fixture.kickoffUtc)),
+        };
+        lineResults.push({ ...r, match: `${m.home} – ${m.away}`, kickoff: m.kickoff });
+      }
+    } catch (err) {
+      report.line = { error: err.message };
+      lineResults = [];
+      if (logger) logger.error('scan.line_failed', { error: err && err.message });
+    }
+
     // D-19: cup matches get a market-only view (no model, no predictions recorded).
     const cups = [];
     try {
@@ -81,7 +103,7 @@ async function scan({ store, sender = null, chatIds = [], usage = null, now = ()
       report.digest = 'ALREADY_EXISTS';
     } else {
       const text = buildDigest({
-        scanDate, horizonHours, results, failed: report.failed, cups,
+        scanDate, horizonHours, results, failed: report.failed, cups, lineResults,
         usage: usage ? await usage().catch(() => null) : null,
         modelVersion: MODEL_VERSION, riskVersion: RISK_VERSION,
       });
@@ -101,7 +123,11 @@ async function scan({ store, sender = null, chatIds = [], usage = null, now = ()
       }
     }
 
-    const problems = [report.failed ? `${report.failed} fixture(s) failed` : null, report.sendErrors ? `${report.sendErrors} Telegram send(s) failed` : null].filter(Boolean);
+    const problems = [
+      report.failed ? `${report.failed} fixture(s) failed` : null,
+      report.line && (report.line.error || report.line.failed) ? `line scan: ${report.line.error || `${report.line.failed} fixture(s) failed`}` : null,
+      report.sendErrors ? `${report.sendErrors} Telegram send(s) failed` : null,
+    ].filter(Boolean);
     await store.finishRun(runId, {
       status: problems.length ? 'PARTIAL' : 'OK',
       finishedAt: now(),

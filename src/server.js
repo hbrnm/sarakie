@@ -14,6 +14,8 @@ const { createOddsApiAdapter } = require('./providers/oddsApi');
 const { createGeminiExplainer } = require('./explain/gemini');
 const { createOnDemandAnalyzer } = require('./pipeline/onDemand');
 const { todayReport } = require('./pipeline/today');
+const { lineReport } = require('./domain/lineShopping/report');
+const { clvMessage } = require('./telegram/lineView');
 
 async function main() {
   let config;
@@ -66,6 +68,7 @@ async function main() {
       ping: () => queries.ping(),
       latestDigest: () => queries.latestDigest(),
       lastScan: () => queries.lastScan(),
+      clv: async () => clvMessage(lineReport(await analysisStore.lineValueCandidates(), { now: new Date() })),
     };
   } else {
     logger.warn('data.unavailable', { reason: 'SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY not set' });

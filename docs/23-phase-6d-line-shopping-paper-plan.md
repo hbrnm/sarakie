@@ -1,6 +1,6 @@
 # 23 — Phase 6d plan: line-shopping paper tracker (D-24)
 
-Status: strategy approved by the PO on 2026-10-15 (D-24). **Implementation is to start in a new session** after the PO approves this plan.
+Status: strategy approved by the PO on 2026-10-15 (D-24); **plan approved and implemented on 2026-10-15** (§8), on branch `feature/phase-6d-line-shopping`, pending merge approval.
 Evidence: `docs/21-phase-6b-backtest-results.md` §6 (positive closing-line edge for line shopping, negative for the model), `docs/22-phase-6c-line-shopping-feasibility.md` (Pinnacle available for every event; about 30–40 candidates per round).
 
 ## 1. Decision D-24 (principle change)
@@ -52,10 +52,41 @@ Evaluation after about 6 weeks or at least 150 settled candidates, whichever com
 
 ROI is reported but is not a criterion (CLAUDE.md §8).
 
-## 6. Prerequisite for the PO
+## 6. Bookmakers available to the PO (answered 2026-10-15)
 
-List which of the candidate bookmakers (onexbet, unibet, leovegas, marathonbet, betsson, nordicbet, williamhill, …) are actually available to the PO. The tracker can restrict "best price" to that list, so results match what could really be played.
+PO list: betano, gsbet, superbet, mrbit, unibet, fortuna.
+
+- **VERIFIED** (Supabase, all stored odds): The Odds API (EU region) carries 23 non-Pinnacle bookmakers; of the PO list, **only Unibet**, and only as `unibet_se`, `unibet_nl`, `unibet_fr`. Betano, Superbet, Fortuna, MrBit and GSBet are absent; The Odds API has no Romanian region.
+- **UNVERIFIED**: unibet.ro prices equal or track those of the SE/NL/FR sites. The digest tells the PO to check the price before relying on it.
+- On today's capture, the rule in §2 gives 27 candidate selections over all bookmakers, 19 of them with a Unibet price (SQL replica of the rule, before implementation).
+
+PO decision (2026-10-15, "both sets"): every candidate is recorded twice, scope `all` (best price over every non-exchange bookmaker: the statistical evidence) and scope `playable` (best price at the PO's bookmakers covered by the source, i.e. Unibet). The digest lists only `playable` candidates; `/clv` reports both; the §5 criteria are evaluated on both.
 
 ## 7. Estimated work
 
 One session: migration 5, the `src/domain/lineShopping` module with unit tests, the job, the digest section, `/clv`, settlement from the CSV, and docs. No new services, no extra odds credits.
+
+## 8. Implementation (2026-10-15)
+
+| Part | Where |
+|---|---|
+| Rule (pure, deterministic), settlement measures, mean with 95% CI | `src/domain/lineShopping/index.js`, parameters in `config.js` (rule `1.0.0`, all PROVISIONAL) |
+| Summary per scope and §5 verdict | `src/domain/lineShopping/report.js` |
+| Scan step (0 credits), called by the scanner on the fixtures and odds of the same run | `src/jobs/lineScan.js`, `src/jobs/scan.js` |
+| Settlement with CLV and close-EV | `src/jobs/lineSettle.js`; workflow step `Line settle` in `daily-sync` (`scripts/line-settle.js`) |
+| Migration 5: `line_candidates`, `line_candidate_outcomes`, view `unsettled_line_candidates` | `supabase/migrations/20261015000005_line_candidates.sql` |
+| Digest section, `/analyze` section, `/clv` | `src/telegram/{digest,lineView}.js`, `src/pipeline/onDemand.js`, `src/telegram/bot.js` |
+
+Details and choices made during implementation:
+
+- **Median** for the outlier gate is the median of the bookmakers other than the one giving the price (§2 wording). With no other bookmaker the gate is skipped and `THIN_MARKET` applies.
+- **Statuses**: positive edge below 3% is `WATCHLIST` with `EDGE_BELOW_MIN` (§2 "a positive edge failing one gate"). Reason codes: `NO_SHARP_REFERENCE`, `NO_PRICE`, `NO_PLAYABLE_PRICE`, `EDGE_BELOW_MIN`, `SHARP_OUTLIER`, `ODDS_OUT_OF_RANGE`, `THIN_MARKET`, `KICKOFF_TOO_CLOSE`.
+- **What is recorded**: every 1X2 selection of every domestic fixture the scanner evaluates (48 h horizon), all statuses, both scopes. A row is unique per fixture, selection, scope, Pinnacle snapshot and price snapshot, so a re-run on unchanged odds inserts nothing. `/analyze` shows the same function's output but records nothing, so each daily capture counts once.
+- **Counting for §5**: each fixture selection counts once per scope, with its **first** `LINE_VALUE` row (the moment the price would have been taken).
+- **Closing odds**: the `Line settle` step re-imports the current season from football-data.org and football-data.co.uk (same code as `backfill-history`, about 11 football-data.org requests, 0 odds credits). A finished candidate is settled once the Pinnacle close is stored; if it is still missing 10 days after kickoff, it is settled without CLV. Cancelled/awarded fixtures are `VOID`.
+- **Scope limits**: domestic leagues only. UCL/UEL have no closing odds in football-data.co.uk (and UEL no results source), so their candidates could not be evaluated.
+- **95% CI** is a normal approximation that treats selections as independent; selections of one match are not, so it is approximate (shown in `/clv`).
+
+Verification: unit tests for the rule, settlement, report and messages, a scanner test with a Unibet `LINE_VALUE` pick, database assertions (`supabase/tests/line_candidates.test.sql`) and the backup round-trip, run locally on PostgreSQL 16.
+
+Known limitations: the Unibet SE/NL/FR price is a proxy for unibet.ro (UNVERIFIED); Pinnacle and the price come from one daily capture, so a price can move before the PO sees it; staleness is not detectable from The Odds API timestamps (6c §3); bookmakers that are beaten repeatedly typically limit accounts.

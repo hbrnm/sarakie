@@ -50,6 +50,11 @@ async function main() {
   ]);
   t('explanations', [{ id: 9, analysis_run_id: U(30), fixture_id: U(10), generator: 'template', model_id: null, validated: false, rejection_reason: 'GEMINI_ERROR', text: 'Linia 1, cu virgulă\n„Linia 2” cu "ghilimele"', created_at: '2026-10-14T07:18:30+00:00' }]);
   t('scan_digests', [{ scan_date: '2026-10-14', analysis_run_id: U(30), text: 'FVIS — scanare\n• a, b', created_at: '2026-10-14T07:19:00+00:00' }]);
+  t('line_candidates', [
+    { id: 200, analysis_run_id: U(30), fixture_id: U(10), kickoff_utc: '2026-10-14T14:00:00+00:00', rule_version: '1.0.0', rule_config_hash: 'd'.repeat(64), scope: 'playable', market_code: '1X2', selection_code: 'HOME', pin_snapshot_id: 42, pin_odds: 2.0, p_pin: 0.4865, pin_overround: 0.0278, pin_captured_at: '2026-10-14T07:17:00+00:00', price_snapshot_id: 42, bookmaker_key: 'unibet_nl', price: 2.1, median_price: 1.95, n_prices: 12, edge: 0.0216, status: 'WATCHLIST', reason_codes: ['EDGE_BELOW_MIN'], created_at: '2026-10-14T07:18:30+00:00' },
+    { id: 201, analysis_run_id: U(30), fixture_id: U(10), kickoff_utc: '2026-10-14T14:00:00+00:00', rule_version: '1.0.0', rule_config_hash: 'd'.repeat(64), scope: 'all', market_code: '1X2', selection_code: 'AWAY', pin_snapshot_id: null, pin_odds: null, p_pin: null, pin_overround: null, pin_captured_at: null, price_snapshot_id: null, bookmaker_key: null, price: null, median_price: null, n_prices: 0, edge: null, status: 'INSUFFICIENT_DATA', reason_codes: ['NO_SHARP_REFERENCE', 'NO_PRICE'], created_at: '2026-10-14T07:18:30+00:00' },
+  ]);
+  t('line_candidate_outcomes', [{ candidate_id: 200, settled_at: '2026-10-15T07:20:00+00:00', result: 'LOSS', home_goals: 1, away_goals: 1, close_snapshot_id: null, pin_close_odds: 2.05, p_pin_close: 0.47, clv: 0.0244, close_ev: -0.013, profit_per_unit: -1 }]);
 
   const manifest = await exportTables({ db, outDir: dir });
   let sql = restoreSql(manifest, dir);
@@ -61,6 +66,8 @@ async function main() {
     "do $$ begin if (select config->>'note' from public.model_versions where id = 1) <> 'a \"quoted\", comma' then raise exception 'jsonb round-trip failed'; end if; end $$;",
     "do $$ begin if (select text from public.explanations where id = 9) not like '%\n„Linia 2” cu \"ghilimele\"' then raise exception 'multi-line text round-trip failed'; end if; end $$;",
     "do $$ begin if (select nextval(pg_get_serial_sequence('public.predictions', 'id'))) <> 102 then raise exception 'identity sequence not reset'; end if; end $$;",
+    "do $$ begin if (select nextval(pg_get_serial_sequence('public.line_candidates', 'id'))) <> 202 then raise exception 'line_candidates sequence not reset'; end if; end $$;",
+    "do $$ begin if (select reason_codes from public.line_candidates where id = 201) <> array['NO_SHARP_REFERENCE', 'NO_PRICE'] then raise exception 'line reason codes round-trip failed'; end if; end $$;",
     'commit;',
   ].join('\n'));
   process.stdout.write(sql);

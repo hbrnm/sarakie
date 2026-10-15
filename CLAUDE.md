@@ -11,7 +11,7 @@
 - GitHub repository: https://github.com/hbrnm/sarakie
 - Repository name: sarakie
 - Version: 1.0.0
-- Current stage: PHASE 5 in progress (authorized 2026-10-15; plan `docs/20-phase-5-plan.md`)
+- Current stage: PHASE 6d line-shopping paper test (plan `docs/23-phase-6d-line-shopping-paper-plan.md`)
 - Product Owner: User
 
 FVIS is a private football value intelligence system designed to identify, quantify, explain and track potentially mispriced football betting markets.
@@ -582,4 +582,6 @@ Dated record of Product Owner approvals. It updates §15 without rewriting it.
 | 2026-10-15 | PRs #1 and #2 merged by the PO. **Phase 6c (line-shopping live feasibility) authorized**: measurement only; results in `docs/22-phase-6c-line-shopping-feasibility.md`. |
 | 2026-10-15 | PR #3 merged by the PO. **D-24** approved: FVIS moves to line shopping (sharp market vs best price) as its value approach, paper-only; amends §4.1 for value candidates. Phase 6d plan in `docs/23-phase-6d-line-shopping-paper-plan.md`, implementation in a new session after plan approval. |
 
-Phase 6 (except the 6a feasibility study, the 6b backtest and the 6c measurement) and later phases remain **not authorized** until explicitly approved.
+| 2026-10-15 | **Phase 6d plan (`docs/23`) approved.** PO bookmakers: betano, gsbet, superbet, mrbit, unibet, fortuna; only Unibet is covered by the odds source. "Both sets" approved: candidates recorded for all bookmakers and for the PO's (Unibet) scope; digest shows the Unibet scope. |
+
+Phase 6 (except the 6a feasibility study, the 6b backtest, the 6c measurement and the 6d paper test) and later phases remain **not authorized** until explicitly approved.

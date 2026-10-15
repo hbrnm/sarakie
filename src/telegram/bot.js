@@ -116,6 +116,8 @@ function createBot({ token, allowedUserIds, logger, getStatus, data = null, now 
     analyze: async (args, rest) => (data && data.analyze ? splitMessage(await data.analyze(rest)) : messages.dataUnavailableMessage()),
     // Re-sends the latest stored digest; never re-runs the scanner and uses no credits.
     scan: async () => (data && data.latestDigest ? messages.scanMessages(await data.latestDigest()) : messages.dataUnavailableMessage()),
+    // Phase 6d: line-shopping paper-test results (stored data only, 0 credits).
+    clv: async () => (data && data.clv ? splitMessage(await data.clv()) : messages.dataUnavailableMessage()),
   };
 
   // Commands are recognized from the text itself, not only from Telegram's

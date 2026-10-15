@@ -50,6 +50,12 @@ const REASONS = Object.freeze({
   THIN_MARKET: 'prea puține case de pariuri',
   TEAM_SAMPLE_SMALL: 'istoric scurt pentru o echipă (sub 10 meciuri, de ex. promovată)',
   QUALIFIED_SUSPENDED: 'QUALIFIED suspendat: backtestul nu arată valoare reală a modelului',
+  // line shopping (Phase 6d)
+  NO_SHARP_REFERENCE: 'fără cote Pinnacle complete',
+  NO_PRICE: 'nicio casă nu are preț',
+  NO_PLAYABLE_PRICE: 'Unibet nu are preț pentru această selecție',
+  EDGE_BELOW_MIN: 'avantaj sub pragul minim',
+  SHARP_OUTLIER: 'prețul nu e clar peste mediana caselor (Pinnacle diferă de piață)',
 });
 
 const reasonText = (code) => REASONS[code] || code;
