@@ -1,8 +1,8 @@
 'use strict';
 
-const { devig } = require('../odds');
+const { devigWith } = require('../odds');
 const { isValidDecimalOdds } = require('../markets');
-const { defaultLineConfig } = require('./config');
+const { defaultLineConfig, devigMethodForRule, LINE_RULE_VERSION } = require('./config');
 
 const SELECTIONS = Object.freeze(['HOME', 'DRAW', 'AWAY']);
 const SCOPES = Object.freeze(['all', 'playable']);
@@ -18,7 +18,8 @@ function median(values) {
  * Line shopping on the 1X2 market of one fixture (D-24, docs/23 §2). Pure and deterministic:
  * the order of the quotes does not matter (ties are broken by bookmaker key).
  *
- * - Probability: Pinnacle's latest complete 1X2 set, de-vigged proportionally (CLAUDE.md §6).
+ * - Probability: Pinnacle's latest complete 1X2 set, de-vigged with `config.devigMethod`
+ *   (rule 1.1.0: power method; 1.0.0: proportional, CLAUDE.md §6).
  * - Price: the best latest price among the other bookmakers (exchanges and aggregates
  *   excluded), for two scopes: `all` bookmakers and `playable` (PO-available) bookmakers.
  * - Edge = p_pin × price − 1. The median (of the bookmakers other than the one giving the
@@ -55,7 +56,7 @@ function evaluateLineShopping({ quotes, kickoffUtc, now, config = defaultLineCon
   let reference = null;
   if (times.length) {
     const set = byTime.get(times[0]);
-    const d = devig('1X2', Object.fromEntries(SELECTIONS.map((s) => [s, set.get(s).decimalOdds])));
+    const d = devigWith(config.devigMethod, '1X2', Object.fromEntries(SELECTIONS.map((s) => [s, set.get(s).decimalOdds])));
     if (d.complete) {
       reference = {
         capturedAt: times[0],
@@ -63,6 +64,8 @@ function evaluateLineShopping({ quotes, kickoffUtc, now, config = defaultLineCon
         snapshotIds: Object.fromEntries(SELECTIONS.map((s) => [s, set.get(s).snapshotId ?? null])),
         pFair: d.pFair,
         overround: d.overround,
+        devigMethod: d.method,
+        devigK: d.k,
       };
     }
   }
@@ -129,9 +132,10 @@ function evaluateLineShopping({ quotes, kickoffUtc, now, config = defaultLineCon
 /**
  * Paper settlement of a line candidate (1 notional unit) with closing-line measures.
  * CLV = price / Pinnacle close − 1; close-EV = p_close × price − 1, p_close from the
- * de-vigged Pinnacle closing 1X2 set (docs/23 §3). Without a complete closing set both are null.
+ * de-vigged Pinnacle closing 1X2 set (docs/23 §3), with the de-vig method of the candidate's
+ * rule version (1.0.0 proportional, 1.1.0 power). Without a complete closing set both are null.
  *
- * @param {{ selectionCode: string, price: number }} candidate
+ * @param {{ selectionCode: string, price: number, ruleVersion?: string }} candidate
  * @param {{ status: string, homeGoals: number|null, awayGoals: number|null }} fixture
  * @param {{ HOME: number, DRAW: number, AWAY: number } | null} closing Pinnacle closing odds
  * @returns {{ result: 'WIN'|'LOSS'|'VOID', profit: number|null, closeOdds: number|null, pClose: number|null, clv: number|null, closeEv: number|null } | null}
@@ -148,7 +152,8 @@ function settleLineCandidate(candidate, fixture, closing) {
     result = won ? 'WIN' : 'LOSS';
   }
   const profit = result === 'VOID' ? null : result === 'WIN' ? candidate.price - 1 : -1;
-  const d = closing && result !== 'VOID' ? devig('1X2', closing) : { complete: false };
+  const method = devigMethodForRule(candidate.ruleVersion ?? LINE_RULE_VERSION);
+  const d = closing && result !== 'VOID' ? devigWith(method, '1X2', closing) : { complete: false };
   if (!d.complete) return { result, profit, closeOdds: null, pClose: null, clv: null, closeEv: null };
   const closeOdds = closing[candidate.selectionCode];
   const pClose = d.pFair[candidate.selectionCode];
@@ -171,4 +176,28 @@ function meanCi(values) {
   return { n, mean, low: mean - half, high: mean + half };
 }
 
-module.exports = { evaluateLineShopping, settleLineCandidate, meanCi, median, SCOPES };
+/**
+ * Mean with a 95% confidence interval clustered by `cluster` (the fixture: selections of one
+ * match, scopes and re-scans are correlated). The mean is the plain mean over observations;
+ * its variance is the cluster-robust (CR1) estimate
+ *   Var = G / (G − 1) · Σ_g (Σ_{i∈g} (x_i − mean))² / N²
+ * with G clusters and N observations, and the interval is mean ± 1.96 · √Var (normal
+ * approximation, docs/23 §9). With one observation per cluster it equals meanCi.
+ * With fewer than 2 clusters there is no interval.
+ * @param {{ value: number, cluster: string }[]} observations
+ */
+function clusterMeanCi(observations) {
+  const n = observations.length;
+  if (!n) return { n: 0, clusters: 0, mean: null, se: null, low: null, high: null };
+  const mean = observations.reduce((a, o) => a + o.value, 0) / n;
+  const clusters = new Map(); // cluster → sum of residuals
+  for (const o of observations) clusters.set(o.cluster, (clusters.get(o.cluster) ?? 0) + (o.value - mean));
+  const g = clusters.size;
+  if (g < 2) return { n, clusters: g, mean, se: null, low: null, high: null };
+  // Clusters are summed in key order so the result does not depend on row order.
+  const ss = [...clusters.keys()].sort().reduce((a, k) => a + clusters.get(k) ** 2, 0);
+  const se = Math.sqrt(((g / (g - 1)) * ss) / (n * n));
+  return { n, clusters: g, mean, se, low: mean - 1.96 * se, high: mean + 1.96 * se };
+}
+
+module.exports = { evaluateLineShopping, settleLineCandidate, meanCi, clusterMeanCi, median, SCOPES };

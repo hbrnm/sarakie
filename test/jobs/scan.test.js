@@ -152,5 +152,5 @@ test('D-24: a Unibet price above Pinnacle-fair odds is a LINE_VALUE pick in the 
   assert.match(text, /aproximează unibet\.ro/);
   const rows = fake.table('line_candidates').filter((c) => c.status === 'LINE_VALUE');
   assert.deepEqual(rows.map((c) => [c.scope, c.selection_code, c.bookmaker_key, c.price]).sort(), [['all', 'HOME', 'unibet_se', 2.3], ['playable', 'HOME', 'unibet_se', 2.3]]);
-  assert.ok(rows.every((c) => c.analysis_run_id === r.runId && c.rule_version === '1.0.0' && c.pin_snapshot_id && c.price_snapshot_id));
+  assert.ok(rows.every((c) => c.analysis_run_id === r.runId && c.rule_version === '1.1.0' && c.pin_snapshot_id && c.price_snapshot_id));
 });

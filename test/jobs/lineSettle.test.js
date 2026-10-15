@@ -5,6 +5,7 @@ const assert = require('node:assert/strict');
 const { lineSettle } = require('../../src/jobs/lineSettle');
 const { createFakeDb } = require('../persistence/fakeDb');
 const { createAnalysisStore } = require('../../src/persistence/analysisStore');
+const { devig, devigPower } = require('../../src/domain/odds');
 
 const NOW = new Date('2026-10-20T08:30:00Z');
 
@@ -52,4 +53,22 @@ test('settles candidates with Pinnacle close; waits for missing closing odds, th
 
   const again = await lineSettle({ store, now: () => NOW });
   assert.deepEqual([again.pending, again.settled], [1, 0]);
+});
+
+test('the close is de-vigged with the method of the candidate rule version (1.0.0 proportional, 1.1.0 power)', async () => {
+  const { fake } = setup([]);
+  const store = createAnalysisStore(fake); // real store: reads the view, then each candidate's rule_version
+  for (const [id, version] of [[11, '1.0.0'], [12, '1.1.0']]) {
+    fake.table('line_candidates').push({ id, rule_version: version });
+    fake.table('unsettled_line_candidates').push({ candidate_id: id, fixture_id: 'f1', selection_code: 'AWAY', price: 4.6, fixture_status: 'FINISHED', home_goals: 0, away_goals: 1, kickoff_utc: '2026-10-18T13:30:00Z' });
+  }
+  const pending = await store.unsettledLineCandidates();
+  assert.deepEqual(pending.map((p) => [p.candidateId, p.ruleVersion]), [[11, '1.0.0'], [12, '1.1.0']]);
+  await lineSettle({ store, now: () => NOW });
+  const o = Object.fromEntries(fake.table('line_candidate_outcomes').map((x) => [x.candidate_id, x]));
+  const close = { HOME: 1.9, DRAW: 3.7, AWAY: 4.3 };
+  assert.ok(Math.abs(o[11].p_pin_close - devig('1X2', close).pFair.AWAY) < 1e-12);
+  assert.ok(Math.abs(o[12].p_pin_close - devigPower('1X2', close).pFair.AWAY) < 1e-12);
+  assert.ok(o[12].close_ev < o[11].close_ev); // the 4.30 longshot is worth less under the power method
+  assert.equal(o[11].clv, o[12].clv); // CLV does not depend on the de-vig
 });

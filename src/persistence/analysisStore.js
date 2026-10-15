@@ -392,8 +392,19 @@ function createAnalysisStore(db) {
         price: num(r.price),
         fixture: { status: r.fixture_status, homeGoals: r.home_goals, awayGoals: r.away_goals, kickoffUtc: new Date(r.kickoff_utc).toISOString() },
       })));
-      if (rows.length < PAGE) return out;
+      if (rows.length < PAGE) break;
     }
+    // Rule version of each candidate (the view predates it): settlement de-vigs the close
+    // with the method of the candidate's own rule (docs/23 §9).
+    const versions = new Map();
+    for (let i = 0; i < out.length; i += 100) {
+      const rows = unwrap(
+        await db.from('line_candidates').select('id, rule_version').in('id', out.slice(i, i + 100).map((c) => c.candidateId)),
+        'read line candidate versions',
+      );
+      for (const r of rows) versions.set(r.id, r.rule_version);
+    }
+    return out.map((c) => ({ ...c, ruleVersion: versions.get(c.candidateId) ?? null }));
   }
 
   /**
@@ -449,7 +460,7 @@ function createAnalysisStore(db) {
       const rows = unwrap(
         await db
           .from('line_candidates')
-          .select('id, fixture_id, scope, selection_code, bookmaker_key, price, edge, kickoff_utc, created_at')
+          .select('id, rule_version, fixture_id, scope, selection_code, bookmaker_key, price, edge, kickoff_utc, created_at')
           .eq('status', 'LINE_VALUE')
           .order('id', { ascending: true })
           .range(from, from + PAGE - 1),
@@ -470,6 +481,7 @@ function createAnalysisStore(db) {
       const o = outcomes.get(c.id);
       return {
         id: c.id,
+        ruleVersion: c.rule_version,
         fixtureId: c.fixture_id,
         scope: c.scope,
         selectionCode: c.selection_code,

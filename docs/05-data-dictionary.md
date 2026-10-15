@@ -123,10 +123,10 @@ One row per (run, fixture, market, selection, line). The row references the **be
 `id`, `prediction_group` (run_id + fixture_id), `generator` (`gemini` | `template`), `model_id`, `validated` (bool), `rejection_reason`, `text`, `created_at`.
 
 ### `line_candidates` — **append-only** (Phase 6d, D-24)
-One row per scanner run, fixture, 1X2 selection and scope (`all` | `playable`), all statuses. Columns: run, fixture, kickoff, rule version and config hash, Pinnacle snapshot/odds/de-vigged probability/overround/capture time, best price snapshot/bookmaker/price, median of the other bookmakers' prices, number of prices, edge (`p_pin × price − 1`), status (`INSUFFICIENT_DATA` | `NO_VALUE` | `WATCHLIST` | `LINE_VALUE`), reason codes. Unique per fixture, selection, scope, Pinnacle snapshot and price snapshot (NULLS NOT DISTINCT). See `docs/23` §8.
+One row per scanner run, fixture, 1X2 selection and scope (`all` | `playable`), all statuses. Columns: run, fixture, kickoff, rule version and config hash, Pinnacle snapshot/odds/de-vigged probability/overround/capture time, best price snapshot/bookmaker/price, median of the other bookmakers' prices, number of prices, edge (`p_pin × price − 1`), status (`INSUFFICIENT_DATA` | `NO_VALUE` | `WATCHLIST` | `LINE_VALUE`), reason codes. Unique per fixture, selection, scope, Pinnacle snapshot and price snapshot (NULLS NOT DISTINCT). `rule_version` `1.0.0`: proportional de-vig; `1.1.0`: power de-vig (`docs/23` §9). See `docs/23` §8.
 
 ### `line_candidate_outcomes` — **append-only**, one per candidate
-Result (`WIN` | `LOSS` | `VOID`), score, Pinnacle closing snapshot and odds, de-vigged closing probability, `clv = price / pin_close − 1`, `close_ev = p_pin_close × price − 1`, paper profit per unit. View `unsettled_line_candidates`: priced candidates of final fixtures without an outcome.
+Result (`WIN` | `LOSS` | `VOID`), score, Pinnacle closing snapshot and odds, de-vigged closing probability (method of the candidate's `rule_version`), `clv = price / pin_close − 1`, `close_ev = p_pin_close × price − 1`, paper profit per unit. View `unsettled_line_candidates`: priced candidates of final fixtures without an outcome.
 
 ## Append-only enforcement (Phase 5)
 

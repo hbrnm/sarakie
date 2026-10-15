@@ -63,7 +63,7 @@ All thresholds live in the model config. They are part of `config_hash`, so any 
 
 ## 4a. Line-shopping status `LINE_VALUE` (Phase 6d, D-24)
 
-Separate from the model statuses above. For 1X2 only, from de-vigged Pinnacle odds and the best non-Pinnacle price: `LINE_VALUE` when edge ≥ 3%, price ≥ 1.03 × the other bookmakers' median, odds 1.30–6.00, at least 5 prices and kickoff ≥ 30 min after capture; a positive edge failing any of these is `WATCHLIST`. `LINE_VALUE` means **recorded for paper tracking only**: not safe, not guaranteed, not a betting tip. Rule and thresholds: `docs/23` §2 and §8.
+Separate from the model statuses above. For 1X2 only, from de-vigged Pinnacle odds (power method from rule 1.1.0, `docs/23` §9) and the best non-Pinnacle price: `LINE_VALUE` when edge ≥ 3%, price ≥ 1.03 × the other bookmakers' median, odds 1.30–6.00, at least 5 prices and kickoff ≥ 30 min after capture; a positive edge failing any of these is `WATCHLIST`. `LINE_VALUE` means **recorded for paper tracking only**: not safe, not guaranteed, not a betting tip. Rule and thresholds: `docs/23` §2 and §8.
 
 ## 5. Language policy
 
